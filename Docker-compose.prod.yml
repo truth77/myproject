@@ -1,44 +1,76 @@
-version: "2"
+version: '3.8'
+
 services:
-  node:
-    build: .
-    ports:
-      - "3001:3001"
-    volumes:
-      - .:/usr/app
-      - /usr/app/node_modules
-    links:
-      - db
-    depends_on:
-      - db
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgres://test:test@db:5432/blackford
-      - TOKEN_SECRET=<JWT_KEY>
-      - CLIENT_SECRET=<CLIENT_SECRET>
-      - CLIENT_ID=<CLIENT_ID>
-      - FACEBOOK_APP_ID=<FACEBOOK_APP_ID>
-    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; npm run prod'
-  db:
-    image: postgres
+      - REACT_APP_API_URL=/api
     ports:
-      - "5432:5432"
-    volumes:
-      - .data-postgres:/var/lib/postgresql/data
+      - "3000:3000"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
     environment:
-      - POSTGRES_USER=test
-      - POSTGRES_PASSWORD=test
-      - POSTGRES_DB=blackford
-    restart: always
-  nginx:
-    restart: always
-    build: ./nginx/
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-blackford}
+      - TOKEN_SECRET=${TOKEN_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - CLIENT_ID=${CLIENT_ID}
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-blackford}
     volumes:
-      - ./dist:/var/lib/assets
-      - ./uploads:/var/lib/assets/uploads
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-blackford}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./uploads:/var/www/uploads
     depends_on:
-      - node
-    links:
-      - node
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local

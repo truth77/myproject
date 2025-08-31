@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+    
+    - name: Install Dependencies
+      run: |
+        npm ci
+        cd client && npm ci
+        cd ..
+    
+    - name: Set up environment variables
+      run: |
+        echo "NODE_ENV=test" >> .env
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test" >> .env
+    
+    - name: Run database migrations
+      run: npx knex migrate:latest
+    
+    - name: Run tests
+      run: |
+        npm test
+        cd client && npm test
+        cd ..
+    
+    - name: Build for production
+      run: |
+        cd client && npm run build
+        cd ..
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+    
+    - name: Install Dependencies
+      run: |
+        npm ci
+        cd client && npm ci
+        cd ..
+    
+    - name: Run ESLint
+      run: |
+        npx eslint .
+        cd client && npx eslint .
+        cd ..
+    
+    - name: Check code formatting
+      run: |
+        npx prettier --check .
+        cd client && npx prettier --check .
+        cd ..

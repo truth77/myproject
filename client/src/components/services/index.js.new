@@ -4,4 +4,3 @@ export { default as PrayerNetwork } from './PrayerNetwork';
 export { default as OnlineCourses } from './OnlineCourses';
 export { default as LiveServices } from './LiveServices';
 export { default as ChurchPlanting } from './ChurchPlanting';
-export { default as LibraryResources } from './LibraryResources';

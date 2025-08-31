@@ -15,3 +15,28 @@ body {
 h1 {
   color: #333;
 }
+
+/* Prevent underlines in service cards */
+.service-card,
+.service-card *,
+.service-card:hover,
+.service-card:hover *,
+.service-card a,
+.service-card a:hover,
+.service-card a:focus,
+.service-card a:active {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* Ensure no text decoration in card content */
+[class*="ServiceCard"],
+[class*="service-card"] {
+  text-decoration: none !important;
+}
+
+[class*="ServiceCard"] *,
+[class*="service-card"] * {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}

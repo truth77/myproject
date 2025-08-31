@@ -7,18 +7,14 @@ services:
       dockerfile: Dockerfile
     container_name: bible-frontend
     environment:
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - REACT_APP_API_URL=http://backend:3000
+      NODE_ENV: production
+      REACT_APP_API_URL: http://localhost:3001
     ports:
       - "3000:3000"
-    volumes:
-      - ./client:/usr/app
-      - /usr/app/node_modules
     networks:
       - bible-network
-    stdin_open: true
-    tty: true
+    depends_on:
+      - backend
 
   backend:
     build: 
@@ -56,7 +52,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: bible
-      POSTGRES_HOST_AUTH_METHOD: trust  # This allows passwordless connections
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

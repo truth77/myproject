@@ -1,91 +1,167 @@
-[![Coverage Status](https://coveralls.io/repos/github/raunofreiberg/blackford/badge.svg?branch=master)](https://coveralls.io/github/raunofreiberg/blackford?branch=master)
-[![Build Status](https://travis-ci.org/raunofreiberg/blackford.svg?branch=master)](https://travis-ci.org/raunofreiberg/blackford)
+# Ark Network Academy
 
-# Full Stack PERN (Postgres, Express, React, Node)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![GitHub Issues](https://img.shields.io/github/issues/raunofreiberg/blackford.svg)](https://github.com/raunofreiberg/blackford/issues)
 
-#### Technologies Used
+A modern, full-stack web application for spiritual growth and community building, featuring interactive Bible study tools, prayer networks, and faith-based courses.
 
-- Node: 8.9.x
-- Express: 4.15.x
-- KnexJS: 0.13.x
-- PostgreSQL: 9.6.x
-- Docker CE
-- Nginx
-- PassportJS with JWT for authentication
-  - Local authentication
-  - Facebook OAuth
-- React: 16
-- Redux: 3.7.x
-- Jest 21.x
-- React-Router: 4.1.x
-- Redux-Form: 6.8.x
-- CSS Modules
-- Webpack 3.x
+## ✨ Features
 
+- **Interactive 3D Service Cards** - Beautiful, responsive cards for easy navigation
+- **User Authentication** - Secure login with JWT and OAuth integration
+- **Subscription Management** - Premium content access control
+- **Responsive Design** - Works seamlessly on all devices
+- **Modern UI/UX** - Clean, intuitive interface with smooth animations
 
-#### Development Setup (Non-Docker variant)
+## 🚀 Tech Stack
 
-* Create a database
+### Frontend
+- React 18+ with Hooks
+- React Router 6 for navigation
+- Context API for state management
+- Styled Components & CSS Modules
+- Responsive Design with Flexbox/Grid
+- Interactive 3D card animations
+
+### Backend
+- Node.js & Express
+- PostgreSQL with Knex.js
+- JWT Authentication
+- RESTful API
+- File upload handling
+
+### DevOps
+- Docker & Docker Compose
+- Nginx reverse proxy
+- Environment-based configuration
+- CI/CD ready
+
+## 🛠️ Prerequisites
+
+- Node.js 16+
+- PostgreSQL 12+
+- npm or yarn
+- Docker (optional)
+
+## 🚀 Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/ark-network-academy.git
+   cd ark-network-academy
+   ```
+
+2. **Setup environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+3. **Install dependencies**
+   ```bash
+   # Install server dependencies
+   npm install
+   
+   # Install client dependencies
+   cd client
+   npm install
+   cd ..
+   ```
+
+4. **Database setup**
+   ```bash
+   # Create database
+   createdb ark_network
+   
+   # Run migrations
+   npx knex migrate:latest
+   
+   # Seed database (optional)
+   npx knex seed:run
+   ```
+
+5. **Start development servers**
+   ```bash
+   # Start backend server
+   npm run dev:server
+   
+   # In a new terminal, start frontend
+   cd client
+   npm start
+   ```
+
+## 🐳 Docker Setup
+
+1. **Set environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+2. **Build and start containers**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Apply database migrations**
+   ```bash
+   docker-compose exec server npx knex migrate:latest
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
+
+## 🚀 Production Deployment
+
+```bash
+docker-compose -f docker-compose.prod.yml up --build -d
+```
+
+## 📝 Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
 
 ```
-$ createdb DB_NAME
+# Server
+NODE_ENV=development
+PORT=5000
+
+# Database
+DATABASE_URL=postgres://postgres:postgres@db:5432/ark_network
+
+# JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=30d
+
+# OAuth (optional)
+FACEBOOK_APP_ID=your_facebook_app_id
+FACEBOOK_APP_SECRET=your_facebook_app_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# AWS S3 (for file uploads, optional)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=your_aws_region
+S3_BUCKET_NAME=your_bucket_name
 ```
 
-* Create a .env file at the root of your application and update it with your env variables.
+## 🤝 Contributing
 
-```
-DATABASE_URL=postgres://localhost/<DB_NAME> // URL of your database
-TOKEN_SECRET=<SECRET> // Signature for signing JWT's
-CLIENT_SECRET=<CLIENT_SECRET> // Facebook app secret
-CLIENT_ID=<CLIENT_ID> // Facebook client ID
-FACEBOOK_APP_ID=<FACEBOOK_APP_ID> // Facebook app ID
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-* Install dependencies
+## 📄 License
 
-```
-$ npm install
-$ npm install -g knex // database connection wrapper - you probably don't have this
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-* Run the migrations provided by this repo
+## 🙏 Acknowledgments
 
-```
-$ knex migrate:latest
-```
-
-* Run the client and server concurrently
-
-```
-$ npm run dev
-```
-
-* You should be able to see the application at `localhost:8080`. All API requests are proxied to the Node.js server running at port 3001
-
-
-#### Docker
-
-* Set some env variables for the Docker-compose.yml file
-
-```
-TOKEN_SECRET=<SECRET> // Signature for signing JWT's
-CLIENT_SECRET=<CLIENT_SECRET> // Facebook app secret
-CLIENT_ID=<CLIENT_ID> // Facebook client ID
-FACEBOOK_APP_ID=<FACEBOOK_APP_ID> // Facebook app ID
-```
-
-* Run it
-
-```
-$ docker-compose up
-```
-
-* Application is available at localhost:3001. No `webpack-dev-server` is used inside Docker, just a regular webpack watch instead.
-
-#### Production
-
-```
-$ docker-compose -f Docker-compose.prod.yml up
-```
-
-¯\_(ツ)_/¯
+- Built with ❤️ for spiritual growth and community building
+- Inspired by the need for accessible faith-based education
+- Special thanks to all contributors who help improve this project

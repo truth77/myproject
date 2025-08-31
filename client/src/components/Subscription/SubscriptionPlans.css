@@ -1,0 +1,160 @@
+.subscription-plans {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.subscription-plans h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.plans-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.plan-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  width: 300px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card.selected {
+  border-color: #4CAF50;
+  background-color: #f8f9fa;
+}
+
+.plan-card h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.price {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #4CAF50;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.price span {
+  font-size: 1rem;
+  color: #666;
+  font-weight: normal;
+}
+
+.description {
+  color: #666;
+  text-align: center;
+  min-height: 60px;
+  margin-bottom: 1.5rem;
+}
+
+.features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+}
+
+.features li {
+  padding: 0.5rem 0;
+  color: #555;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.features li:before {
+  content: '✓';
+  color: #4CAF50;
+  position: absolute;
+  left: 0;
+}
+
+.subscribe-btn, .manage-btn {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.subscribe-btn:hover, .manage-btn:hover {
+  background-color: #45a049;
+}
+
+.subscribe-btn:disabled, .manage-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.manage-subscription {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.manage-subscription h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.manage-btn {
+  max-width: 300px;
+  margin: 0 auto;
+  background-color: #2196F3;
+}
+
+.manage-btn:hover {
+  background-color: #0b7dda;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #dc3545;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .plans-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .plan-card {
+    width: 100%;
+    max-width: 350px;
+    margin-bottom: 1.5rem;
+  }
+}

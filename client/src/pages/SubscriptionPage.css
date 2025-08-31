@@ -1,0 +1,123 @@
+.subscription-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.subscription-container {
+  width: 100%;
+  max-width: 1200px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-top: 2rem;
+}
+
+.subscription-page h1 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.subscription-alert {
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.subscription-alert h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.subscription-alert p {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
+
+.subscription-alert.warning {
+  background-color: #fff3cd;
+  border-left: 5px solid #ffc107;
+  color: #856404;
+}
+
+.subscription-alert.error {
+  background-color: #f8d7da;
+  border-left: 5px solid #dc3545;
+  color: #721c24;
+}
+
+.subscription-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eee;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.subscription-footer a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.subscription-footer a:hover {
+  text-decoration: underline;
+}
+
+.subscription-footer .small {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  color: #6c757d;
+}
+
+/* Loading spinner */
+.subscription-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #4CAF50;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .subscription-container {
+    padding: 1.5rem;
+  }
+  
+  .subscription-page h1 {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+}

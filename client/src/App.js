@@ -384,6 +384,7 @@ const ServiceCard = ({ title, description, icon, color, to }) => {
   };
 
   const titleStyle = {
+    textDecoration: 'none !important',
     color: '#1f2937',
     fontSize: '1.2rem',
     fontWeight: '600',
@@ -398,6 +399,7 @@ const ServiceCard = ({ title, description, icon, color, to }) => {
   };
 
   const descriptionStyle = {
+    textDecoration: 'none !important',
     color: '#6b7280',
     fontSize: '0.92rem',
     lineHeight: '1.65',

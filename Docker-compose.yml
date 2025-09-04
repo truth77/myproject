@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -9,9 +7,10 @@ services:
     environment:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
-      - REACT_APP_API_URL=http://backend:3000
+      - PORT=3000
+      - REACT_APP_API_URL=http://localhost:3001/api
     ports:
-      - "3000:3000"
+      - "3002:3000"
     volumes:
       - ./client:/usr/app
       - /usr/app/node_modules
@@ -19,6 +18,7 @@ services:
       - bible-network
     stdin_open: true
     tty: true
+    restart: unless-stopped
 
   backend:
     build: 
@@ -34,7 +34,7 @@ services:
       DB_PASSWORD: postgres
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bible?schema=public
       SESSION_SECRET: your-session-secret
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:3003
       JWT_SECRET: your-jwt-secret
       NODE_OPTIONS: --max-old-space-size=1024
     ports:
@@ -46,6 +46,12 @@ services:
       postgres:
         condition: service_healthy
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     networks:
       - bible-network
 

@@ -6,6 +6,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAppContext();
   const { subscription } = useSubscription?.() || {};
+  const isAdmin = user?.role === 'admin' || user?.isAdmin;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const location = useLocation();
@@ -44,7 +45,12 @@ const Navbar = () => {
     { to: "/prayer", text: "Prayer Network" },
     { to: "/courses", text: "Online Courses" },
     { to: "/live", text: "Live Services" },
-    { to: "/plant-churches", text: "Plant Churches" }
+    { to: "/plant-churches", text: "Plant Churches" },
+    ...(isAuthenticated ? [
+      { to: "/premium-content", text: "Premium Content" },
+      { to: "/profile", text: "My Profile" },
+      ...(isAdmin ? [{ to: "/admin", text: "Admin Dashboard" }] : [])
+    ] : [])
   ];
 
   return (

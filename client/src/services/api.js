@@ -127,3 +127,155 @@ export const donationsApi = {
     return handleResponse(response);
   },
 };
+
+// Subscriptions API
+export const subscriptionsApi = {
+  // Get available subscription plans
+  getPlans: async () => {
+    const response = await fetch(`${API_BASE_URL}/subscriptions/plans`);
+    return handleResponse(response);
+  },
+
+  // Create a checkout session for subscription
+  createCheckoutSession: async (priceId) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/subscriptions/create-checkout-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ priceId })
+    });
+    return handleResponse(response);
+  },
+
+  // Get current user's subscription status
+  getSubscriptionStatus: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/subscriptions/status`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Cancel subscription
+  cancelSubscription: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/subscriptions/cancel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Admin: Get all subscribers
+  getSubscribers: async ({ page = 1, limit = 10, search = '' } = {}) => {
+    const token = localStorage.getItem('token');
+    const query = new URLSearchParams({
+      page,
+      limit,
+      search
+    }).toString();
+    
+    const response = await fetch(`${API_BASE_URL}/admin/subscribers?${query}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Admin: Get subscriber details
+  getSubscriber: async (userId) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/admin/subscribers/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Admin: Update subscription
+  updateSubscription: async (userId, subscriptionData) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/admin/subscribers/${userId}/subscription`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(subscriptionData)
+    });
+    return handleResponse(response);
+  },
+
+  // Admin: Cancel subscription for a user
+  adminCancelSubscription: async (userId) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/admin/subscribers/${userId}/subscription/cancel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Admin: Get dashboard stats
+  getAdminStats: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/admin/stats`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return handleResponse(response);
+  },
+
+  // Admin: Export subscribers
+  exportSubscribers: async (format = 'csv') => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/admin/subscribers/export?format=${format}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to export subscribers');
+    }
+    
+    // Handle file download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `subscribers-${new Date().toISOString().split('T')[0]}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+    
+    return { success: true };
+  },
+};
+
+// Premium Content API
+export const premiumApi = {
+  // Get premium content (requires active subscription)
+  getPremiumContent: async () => {
+    const response = await fetch(`${API_BASE_URL}/premium/content`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return handleResponse(response);
+  },
+};

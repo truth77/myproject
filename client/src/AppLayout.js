@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Link, Navigate } from 'react-router-dom';
 import { 
   BibleStudy, 
   PrayerNetwork, 
@@ -9,14 +9,19 @@ import {
   LibraryResources 
 } from './components/services';
 import ToolsPage from './components/tools/ToolsPage';
-import { useAppContext } from './contexts/AppContext';
+import { useAppContext, useAuth } from './contexts/AppContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import SubscriptionRequired from './components/auth/SubscriptionRequired';
+import PremiumContentPage from './pages/PremiumContentPage';
+import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
 import Breadcrumb from './components/Breadcrumb';
 import ScrollToTop from './components/ScrollToTop';
 import Login from './components/Login';
 import Register from './components/Register';
 import Home from './components/Home';
+import AdminRoutes from './routes/AdminRoutes';
+import TestPremiumPage from './pages/TestPremiumPage';
 
 const AppLayout = () => {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
@@ -124,10 +129,33 @@ const AppLayout = () => {
               <LibraryResources />
             </ProtectedRoute>
           } />
-          
+          <Route path="/tools" element={<ToolsPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route 
+            path="/premium-content" 
+            element={
+              <SubscriptionRequired>
+                <PremiumContentPage />
+              </SubscriptionRequired>
+            } 
+          />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
           <Route path="/" element={<Home />} />
+          
+          {/* Test Premium Page */}
+          <Route 
+            path="/testpremium" 
+            element={
+              <SubscriptionRequired>
+                <TestPremiumPage />
+              </SubscriptionRequired>
+            } 
+          />
         </Routes>
       </main>
     </div>

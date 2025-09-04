@@ -9,10 +9,24 @@ const app = express();
 require('./db');
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:3003'
+    ];
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,10 +50,12 @@ app.use(passport.session());
 // Import routes
 const authRoutes = require('./routes/auth');
 const subscriptionRoutes = require('./routes/subscriptions');
+const premiumRoutes = require('./routes/premium');
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/premium', premiumRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -75,6 +91,11 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), (req, res) =
     console.error(`Webhook Error: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 // Error handling

@@ -33,7 +33,13 @@ export const AppProvider = ({ children }) => {
       const userData = await authApi.login(credentials);
       setUser(userData);
       setIsAuthenticated(true);
-      return { success: true };
+      // Check if user is admin
+      const isAdmin = userData.role === 'admin' || userData.isAdmin === true;
+      if (isAdmin) {
+        userData.isAdmin = true;
+        userData.role = 'admin';
+      }
+      return { success: true, user: userData };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -41,8 +47,12 @@ export const AppProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      await authApi.register(userData);
-      return { success: true };
+      const response = await authApi.register(userData);
+      if (response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+      }
+      return { success: true, user: response.user };
     } catch (error) {
       return { success: false, message: error.message };
     }

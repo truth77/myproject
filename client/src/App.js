@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AppProvider } from './contexts/AppContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './AppLayout';
 import './App.css';
 
@@ -10,9 +11,11 @@ function App() {
   return (
     <Router>
       <AppProvider>
-        <SubscriptionProvider>
-          <AppLayout />
-        </SubscriptionProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <AppLayout />
+          </SubscriptionProvider>
+        </AuthProvider>
       </AppProvider>
     </Router>
   );

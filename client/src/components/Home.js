@@ -396,7 +396,6 @@ const ServiceCard = ({ title, description, path, icon, isAuthenticated, color })
             fontSize: '1.5rem',
             textAlign: 'center',
             marginBottom: '1rem',
-            color: '#2c3e50',
             fontWeight: 600,
             transition: 'color 0.3s ease',
             color: isHovered ? glowColors[title] || '#2c3e50' : '#2c3e50'

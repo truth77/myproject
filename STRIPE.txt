@@ -1,13 +1,49 @@
-Test Users
+////////////
+Test Users Results For Login and Registration
+////////////
+
 Super Admin (Full Access)
+
+Did not work-
 Email: superadmin@example.com
 Password: password
+
+It did work! I registered this one and it did work with login after I did a fresh registration-
+Email: admin@example.com
+Password: C00kies$$$
+
+/////////////
+
 Subscriber (Premium Access)
-Email: subscriber@example.com
+
+Did not work-
+Email: subscriber@example.com  
 Password: password
+
+It did work! I registered all of these and it did work with a login after I did a fresh registration with each one-
+Emails: subscriberyearly@example.com , subscribermonthly@example.com , subscriberdonation@example.com
+Password: C00kies$$$
+
+(I chose three types of premium subscribers because I want to eventualy test a monthly premium subscription, a yearly premium subscription, and a user who is does donations, rather than monthly or yearly reocurring subscribers.)
+
+///////////////
+
 Regular User (Free Tier)
-Email: test@example.com
+
+Did not work-
+Email: test@example.com   
 Password: password
+
+It did work! I registered this one and it did work with login after I did a fresh registration-
+Email: testone@example.com
+Password: C00kies$$$
+
+///////////////
+
+
+
+
+
 Test Credit Cards
 Success: 4242 4242 4242 4242
 Authentication Required: 4000 0025 0000 3155

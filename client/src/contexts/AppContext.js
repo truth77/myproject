@@ -12,19 +12,56 @@ export const AppProvider = ({ children }) => {
 
   // Load user on initial render
   useEffect(() => {
+    let isMounted = true;
+    
     const loadUser = async () => {
+      // Skip if we already know the user is not authenticated (e.g., from localStorage)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        if (isMounted) {
+          setUser(null);
+          setIsAuthenticated(false);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const userData = await authApi.getCurrentUser();
-        setUser(userData);
-        setIsAuthenticated(true);
+        if (isMounted && userData) {
+          // Check if user is admin
+          const isAdmin = userData.role === 'admin' || userData.isAdmin === true;
+          if (isAdmin) {
+            userData.isAdmin = true;
+            userData.role = 'admin';
+          }
+          setUser(userData);
+          setIsAuthenticated(true);
+        } else if (isMounted) {
+          // If no user data but we had a token, clear it
+          localStorage.removeItem('token');
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       } catch (err) {
-        console.error('Not authenticated');
+        // Clear invalid token on error
+        if (isMounted) {
+          localStorage.removeItem('token');
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Auth functions

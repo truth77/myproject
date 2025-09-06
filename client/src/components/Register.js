@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAppContext } from '../contexts/AppContext';
+import axios from 'axios';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { register } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,28 +40,59 @@ const Register = () => {
     }
 
     setIsLoading(true);
+    setError('');
 
     try {
-      const result = await register({
-        name: formData.name,
+      console.log('Attempting to register user:', { 
+        username: formData.username, 
+        email: formData.email 
+      });
+      
+      const response = await axios.post(`${API_URL}/auth/register`, {
+        username: formData.username,
         email: formData.email,
         password: formData.password
       });
       
-      if (result.success) {
-        // Redirect to login page with success message
-        navigate('/login', { 
-          state: { 
-            from: from,
-            registrationSuccess: 'Registration successful! Please log in.'
-          } 
-        });
-      } else {
-        setError(result.message || 'Registration failed. Please try again.');
-      }
+      console.log('Registration response:', response.data);
+      
+      // If we get here, registration was successful
+      navigate('/login', { 
+        state: { 
+          from: from,
+          registrationSuccess: 'Registration successful! Please log in.'
+        } 
+      });
     } catch (err) {
-      setError('An error occurred during registration. Please try again.');
-      console.error('Registration error:', err);
+      console.error('Registration error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers
+      });
+      
+      // Handle different types of errors
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (err.response.data && err.response.data.error) {
+          setError(err.response.data.error);
+        } else if (err.response.status === 400) {
+          setError('Invalid registration data. Please check your input.');
+        } else if (err.response.status === 409) {
+          setError('A user with this email already exists.');
+        } else {
+          setError(`Registration failed: ${err.response.status} ${err.response.statusText}`);
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error('No response received:', err.request);
+        setError('Unable to connect to the server. Please try again later.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Request setup error:', err.message);
+        setError('An error occurred while setting up the request.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -122,19 +153,19 @@ const Register = () => {
       
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="name" style={{
+          <label htmlFor="username" style={{
             display: 'block',
             marginBottom: '0.5rem',
             fontWeight: '500',
             color: '#2c3e50'
           }}>
-            Full Name
+            Username
           </label>
           <input
             type="text"
-            id="name"
-            name="name"
-            value={formData.name}
+            id="username"
+            name="username"
+            value={formData.username}
             onChange={handleChange}
             required
             style={{

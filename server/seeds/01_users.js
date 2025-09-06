@@ -1,12 +1,38 @@
+const bcrypt = require('bcryptjs');
+
+// Hash for 'password'
+const hashedPassword = bcrypt.hashSync('password', 10);
+
 exports.seed = function(knex) {
   return knex('users').del()
     .then(function () {
-      // Hash for 'password123'
       return knex('users').insert([
+        // Super Admin
+        {
+          username: 'superadmin',
+          email: 'superadmin@example.com',
+          password_hash: hashedPassword,
+          role: 'admin',
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        // Subscriber (Premium)
+        {
+          username: 'subscriber',
+          email: 'subscriber@example.com',
+          password_hash: hashedPassword,
+          role: 'user',
+          subscription_status: 'active',
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        // Regular User (Free Tier)
         {
           username: 'testuser',
           email: 'test@example.com',
-          password_hash: '$2a$10$XFDq3wLx.sU1pl3p2KTAp.1jQQS5v5eJd0k1ZJ5y5X5R1JQ5X5X5W',
+          password_hash: hashedPassword,
+          role: 'user',
+          subscription_status: 'inactive',
           created_at: new Date(),
           updated_at: new Date()
         }

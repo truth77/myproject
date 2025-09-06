@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db'); // We'll create this next
+const db = require('../db');
+const { authenticateToken } = require('../middleware/auth');
 
 // Register
 router.post('/register', async (req, res) => {
@@ -98,6 +99,25 @@ router.get('/me', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(401).json({ error: 'Not authenticated' });
+  }
+});
+
+// Get current user
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await db('users')
+      .where({ id: req.user.id })
+      .select('id', 'username', 'email', 'role', 'subscription_status')
+      .first();
+      
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

@@ -83,8 +83,12 @@ const requireSubscription = async (req, res, next) => {
   }
 };
 
+// Alias authenticateJWT as authenticateToken for consistency with common naming
+const authenticateToken = authenticateJWT;
+
 module.exports = {
   authenticateJWT,
+  authenticateToken,
   requireAdmin,
   requireSubscription
 };

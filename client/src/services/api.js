@@ -2,12 +2,32 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api
 
 // Helper function to handle responses
 const handleResponse = async (response) => {
-  const data = await response.json();
+  // For 204 No Content responses, return null
+  if (response.status === 204) {
+    return null;
+  }
+
+  // For 401 Unauthorized, return null instead of throwing an error
+  if (response.status === 401) {
+    // Clear any invalid token
+    localStorage.removeItem('token');
+    return null;
+  }
+
+  // For 404 Not Found, return null instead of throwing an error
+  if (response.status === 404) {
+    return null;
+  }
+
+  const data = await response.json().catch(() => ({}));
+  
   if (!response.ok) {
     const error = new Error(data.message || 'Something went wrong');
     error.status = response.status;
+    error.data = data;
     throw error;
   }
+  
   return data;
 };
 
@@ -64,14 +84,28 @@ export const postsApi = {
 export const authApi = {
   // Login
   login: async (credentials) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
-    return handleResponse(response);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(credentials),
+      });
+      
+      const data = await handleResponse(response);
+      
+      // If we got a token in the response, store it
+      if (data && data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   },
 
   // Register
@@ -88,10 +122,32 @@ export const authApi = {
 
   // Get current user
   getCurrentUser: async () => {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
-      credentials: 'include',
-    });
-    return handleResponse(response);
+    // Don't make the request if we don't have a token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      // If we get a 401, clear the invalid token
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        return null;
+      }
+      
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      return null;
+    }
   },
 
   // Logout

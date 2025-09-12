@@ -1,13 +1,17 @@
 {
-  "name": "blackford-frontend",
-  "version": "1.0.0",
+  "name": "bible-frontend",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
-    "start": "set PORT=3002 && react-scripts start",
+    "start": "set PORT=3002 && set HOST=0.0.0.0 && set WDS_SOCKET_PORT=3002 && set FAST_REFRESH=true && set CHOKIDAR_USEPOLLING=true && react-scripts start",
+    "prebuild": "node scripts/update-version.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "docker-dev": "webpack --watch"
+    "docker-dev": "webpack --watch",
+    "version:patch": "npm version patch && node scripts/update-version.js",
+    "version:minor": "npm version minor && node scripts/update-version.js",
+    "version:major": "npm version major && node scripts/update-version.js"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

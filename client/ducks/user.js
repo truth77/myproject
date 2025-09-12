@@ -44,7 +44,7 @@ export const setAuthorized = status => ({ type: SET_AUTHORIZED, status });
 
 const handleAuthentication = (path, values) => async (dispatch) => {
     try {
-        let res = await fetch(`${process.env.API_HOST}/auth/${path}`, {
+        let res = await fetch(`${process.env.API_HOST}/${path}`, {
             method: 'POST',
             headers: new Headers({ 'content-type': 'application/json' }),
             mode: 'cors',

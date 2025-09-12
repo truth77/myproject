@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { subscriptionsApi } from '../../services/api';
-import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useNewSubscription } from '../../contexts/NewSubscriptionContext';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
@@ -11,7 +11,7 @@ const SubscriptionPlans = () => {
   const [error, setError] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly');
-  const { subscription } = useSubscription();
+  const { subscription } = useNewSubscription();
 
   useEffect(() => {
     const fetchPlans = async () => {

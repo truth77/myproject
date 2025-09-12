@@ -1,0 +1,167 @@
+{
+  "info": {
+    "name": "Subscription API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Subscription Plans",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/plans",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "plans"]
+        }
+      }
+    },
+    {
+      "name": "Create Checkout Session",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": JSON.stringify({
+            "priceId": "{{monthlyPriceId}}",
+            "isSubscription": true
+          }, null, 2)
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/checkout-session",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "checkout-session"]
+        }
+      }
+    },
+    {
+      "name": "Get My Subscription",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/my-subscription",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "my-subscription"]
+        }
+      }
+    },
+    {
+      "name": "Customer Portal",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/customer-portal",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "customer-portal"]
+        }
+      }
+    },
+    {
+      "name": "Cancel Subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/cancel",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "cancel"]
+        }
+      }
+    },
+    {
+      "name": "Reactivate Subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/reactivate",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "reactivate"]
+        }
+      }
+    },
+    {
+      "name": "Stripe Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "stripe-signature",
+            "value": "{{stripeSignature}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": \"evt_123456789\",\n  \"object\": \"event\",\n  \"api_version\": \"2020-08-27\",\n  \"created\": 1610000000,\n  \"data\": {\n    \"object\": {\n      \"id\": \"sub_123456789\",\n      \"object\": \"subscription\",\n      \"status\": \"active\"\n    }\n  },\n  \"type\": \"customer.subscription.updated\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/subscriptions/webhook",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "subscriptions", "webhook"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "authToken",
+      "value": "your_jwt_token_here"
+    },
+    {
+      "key": "monthlyPriceId",
+      "value": "price_1S4btNEWSKGO1T0LPBNf1ZKS"
+    },
+    {
+      "key": "stripeSignature",
+      "value": "whsec_..."
+    }
+  ]
+}

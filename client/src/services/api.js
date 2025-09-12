@@ -1,3 +1,4 @@
+// Use the full API base URL from environment variables
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 // Helper function to handle responses
@@ -85,7 +86,7 @@ export const authApi = {
   // Login
   login: async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,14 +111,51 @@ export const authApi = {
 
   // Register
   register: async (userData) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-    return handleResponse(response);
+    try {
+      const registerUrl = `${API_BASE_URL}/register`;
+      
+      console.log('Sending registration request to:', registerUrl);
+      console.log('Request payload:', userData);
+      
+      const response = await fetch(registerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(userData),
+        credentials: 'include'
+      });
+      
+      console.log('Registration response status:', response.status);
+      
+      // Handle non-JSON responses
+      const contentType = response.headers.get('content-type');
+      let responseData = {};
+      
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        const text = await response.text();
+        console.warn('Non-JSON response received:', text);
+        throw new Error(`Unexpected response format: ${contentType}`);
+      }
+      
+      console.log('Registration response data:', responseData);
+      
+      if (!response.ok) {
+        const error = new Error(responseData.error || `Registration failed with status ${response.status}`);
+        error.response = response;
+        error.status = response.status;
+        error.data = responseData;
+        throw error;
+      }
+      
+      return responseData;
+    } catch (error) {
+      console.error('Error in register function:', error);
+      throw error;
+    }
   },
 
   // Get current user
@@ -129,7 +167,7 @@ export const authApi = {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/login/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -152,7 +190,7 @@ export const authApi = {
 
   // Logout
   logout: async () => {
-    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    const response = await fetch(`${API_BASE_URL}/login/logout`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -202,6 +240,19 @@ export const subscriptionsApi = {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ priceId })
+    });
+    return handleResponse(response);
+  },
+
+  // Create a customer portal session for managing subscriptions
+  createCustomerPortalSession: async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/subscriptions/customer-portal`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
     });
     return handleResponse(response);
   },

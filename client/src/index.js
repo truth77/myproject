@@ -1,21 +1,28 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { AppProvider } from './contexts/AppContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import App from './App';
 import './index.css';
 
-const root = ReactDOM.createRoot(document.getElementById('r    
+// Initialize the root element
+const container = document.getElementById('root');
+if (!container) {
+  throw new Error('Failed to find the root element');
+}
+
+// Create the root
+const root = createRoot(container);
+
+// Render the app
+root.render(
+  <React.StrictMode>
     <Router>
-      <AppProvider>
-        <AuthProvider>
-          <SubscriptionProvider>
-            <App />
-          </SubscriptionProvider>
-        </AuthProvider>
-      </AppProvider>
+      <App />
     </Router>
   </React.StrictMode>
 );
+
+// Webpack Hot Module Replacement API
+if (module.hot) {
+  module.hot.accept();
+}

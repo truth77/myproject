@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, Link, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Routes, Route, Outlet } from 'react-router-dom';
 import { 
   BibleStudy, 
   PrayerNetwork, 
@@ -9,7 +9,7 @@ import {
   LibraryResources 
 } from './components/services';
 import ToolsPage from './components/tools/ToolsPage';
-import { useAppContext, useAuth } from './contexts/AppContext';
+import { useAppContext } from './contexts/AppContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SubscriptionRequired from './components/auth/SubscriptionRequired';
 import PremiumContentPage from './pages/PremiumContentPage';
@@ -17,25 +17,40 @@ import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
 import Breadcrumb from './components/Breadcrumb';
 import ScrollToTop from './components/ScrollToTop';
-import Login from './components/Login';
-import Register from './components/Register';
 import Home from './components/Home';
-import AdminRoutes from './routes/AdminRoutes';
 import TestPremiumPage from './pages/TestPremiumPage';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import SubscriptionCanceled from './pages/SubscriptionCanceled';
+import SubscriptionManagement from './pages/SubscriptionManagement';
+import SubscriptionPlans from './pages/SubscriptionPlans';
+import VersionDisplay from './components/common/VersionDisplay';
+import Footer from './components/common/Footer';
 
 const AppLayout = () => {
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth < 768);
   const { loading } = useAppContext();
-  const location = useLocation();
+  const resizeTimeout = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobileView(mobile);
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+      }
+      
+      resizeTimeout.current = setTimeout(() => {
+        const mobile = window.innerWidth < 768;
+        setIsMobileView(prev => prev !== mobile ? mobile : prev);
+      }, 100);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
+    
+    return () => {
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+      }
+      window.removeEventListener('resize', handleResize, { passive: true });
+    };
   }, []);
 
   if (loading) {
@@ -78,17 +93,24 @@ const AppLayout = () => {
         width: '100%',
         margin: 0,
         boxSizing: 'border-box',
-        overflowX: 'hidden'
+        overflowX: 'hidden',
+        minHeight: 'calc(100vh - 200px)'
       }}>
         <ScrollToTop />
         <Breadcrumb />
         <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/subscription" element={<SubscriptionPlans />} />
+          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+          <Route path="/subscription/canceled" element={<SubscriptionCanceled />} />
+          
           {/* Public splash pages */}
           <Route path="/bible" element={<BibleStudy splash={true} />} />
           <Route path="/prayer" element={<PrayerNetwork splash={true} />} />
           <Route path="/class" element={<OnlineCourses splash={true} />} />
           <Route path="/live" element={<LiveServices splash={true} />} />
           <Route path="/plant" element={<ChurchPlanting splash={true} />} />
+          
           {/* Library Routes */}
           <Route path="/library" element={<LibraryResources splash={true} />} />
           <Route path="/library/ebook" element={<>E-Books Content</>} />
@@ -98,7 +120,7 @@ const AppLayout = () => {
           <Route path="/library/article" element={<>Articles Content</>} />
           <Route path="/library/tool" element={<ToolsPage />} />
           
-          {/* Protected routes for actual functionality */}
+          {/* Protected routes */}
           <Route path="/bible-study" element={
             <ProtectedRoute>
               <BibleStudy />
@@ -129,35 +151,41 @@ const AppLayout = () => {
               <LibraryResources />
             </ProtectedRoute>
           } />
+          
           <Route path="/tools" element={<ToolsPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route 
-            path="/premium-content" 
-            element={
-              <SubscriptionRequired>
-                <PremiumContentPage />
-              </SubscriptionRequired>
-            } 
-          />
+          
+          <Route path="/premium-content" element={
+            <SubscriptionRequired>
+              <PremiumContentPage />
+            </SubscriptionRequired>
+          } />
+          
           <Route path="/profile" element={
             <ProtectedRoute>
               <ProfilePage />
             </ProtectedRoute>
           } />
-          <Route path="/" element={<Home />} />
           
-          {/* Test Premium Page */}
-          <Route 
-            path="/testpremium" 
-            element={
-              <SubscriptionRequired>
-                <TestPremiumPage />
-              </SubscriptionRequired>
-            } 
-          />
+          <Route path="/account/subscription" element={
+            <ProtectedRoute>
+              <SubscriptionManagement />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/testpremium" element={
+            <SubscriptionRequired>
+              <TestPremiumPage />
+            </SubscriptionRequired>
+          } />
         </Routes>
       </main>
+      
+      <Footer />
+      
+      {/* Version display in corner */}
+      <div style={{ position: 'fixed', bottom: 10, left: 10, zIndex: 1000 }}>
+        <VersionDisplay />
+      </div>
     </div>
   );
 };

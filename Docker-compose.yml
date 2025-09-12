@@ -6,27 +6,53 @@ services:
     container_name: bible-frontend
     environment:
       - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:3001
+      - NODE_OPTIONS=--max-old-space-size=1024
       - CHOKIDAR_USEPOLLING=true
-      - PORT=3000
-      - REACT_APP_API_URL=http://localhost:3001/api
+      - WDS_SOCKET_PORT=3002
+      - WDS_SOCKET_HOST=localhost
+      - WDS_SOCKET_PATH=/sockjs-node
+      - WATCHPACK_POLLING=true
+      - FAST_REFRESH=true
     ports:
       - "3002:3000"
+      - "3003:3003" # For webpack dev server websocket
     volumes:
       - ./client:/usr/app
       - /usr/app/node_modules
-    networks:
-      - bible-network
+      - /usr/app/build
+    working_dir: /usr/app
+    command: sh -c "npm install && npm start"
     stdin_open: true
     tty: true
+    networks:
+      - bible-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   backend:
-    build: 
+    build:
       context: ./server
       dockerfile: Dockerfile
     container_name: bible-backend
+    env_file:
+      - ./.env
     environment:
       NODE_ENV: development
+      NODE_OPTIONS: --max-old-space-size=2048
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: bible
@@ -36,7 +62,27 @@ services:
       SESSION_SECRET: your-session-secret
       FRONTEND_URL: http://localhost:3003
       JWT_SECRET: your-jwt-secret
-      NODE_OPTIONS: --max-old-space-size=1024
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRODUCT_WEEKLY: ${STRIPE_PRODUCT_WEEKLY}
+      STRIPE_PRODUCT_MONTHLY: ${STRIPE_PRODUCT_MONTHLY}
+      STRIPE_PRODUCT_YEARLY: ${STRIPE_PRODUCT_YEARLY}
+      STRIPE_PRODUCT_DONATION: ${STRIPE_PRODUCT_DONATION}
+      REACT_APP_STRIPE_PUBLIC_KEY: ${REACT_APP_STRIPE_PUBLIC_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 3G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
     ports:
       - "3001:3000"
     volumes:
@@ -45,13 +91,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     networks:
       - bible-network
 
@@ -62,18 +101,31 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: bible
-      POSTGRES_HOST_AUTH_METHOD: trust  # This allows passwordless connections
+      POSTGRES_HOST_AUTH_METHOD: trust
+      # Optimize PostgreSQL for better performance
+      POSTGRES_INITDB_ARGS: --data-checksums
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "5432:5432"
     networks:
       - bible-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d bible"]
-      interval: 5s
+      interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
 networks:
   bible-network:

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
-import { useSubscription } from '../contexts/SubscriptionContext';
+import { useNewSubscription } from '../contexts/NewSubscriptionContext';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAppContext();
-  const { subscription } = useSubscription?.() || {};
+  const { subscription } = useNewSubscription?.() || {};
   const isAdmin = user?.role === 'admin' || user?.isAdmin;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
@@ -184,7 +184,7 @@ const Navbar = () => {
                     {subscription.status === 'active' ? 'Subscribed' : 'Not Subscribed'}
                   </span>
                   <Link 
-                    to="/subscribe" 
+                    to={subscription.status === 'active' ? "/account/subscription" : "/subscription"}
                     style={{
                       color: 'white',
                       fontSize: '0.85rem',

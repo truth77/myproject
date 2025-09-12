@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../contexts/AppContext';
-import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useNewSubscription } from '../../contexts/NewSubscriptionContext';
 
 const ProtectedRoute = ({ children, requireSubscription = true }) => {
   const { isAuthenticated, loading: authLoading } = useAppContext();
-  const { subscription, loading: subscriptionLoading, refreshSubscription } = useSubscription?.() || {};
+  const { subscription, loading: subscriptionLoading, refreshSubscription } = useNewSubscription?.() || {};
   const location = useLocation();
   const navigate = useNavigate();
 

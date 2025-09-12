@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import axios from 'axios';
+import { authApi } from '../services/api';
 
+// Define input style outside the component
+const inputStyle = {
+  width: '100%',
+  padding: '0.75rem',
+  border: '1px solid #ddd',
+  borderRadius: '4px',
+  fontSize: '1rem',
+  boxSizing: 'border-box',
+  marginBottom: '0.5rem'
+};
+
+// VERSION: 1.1 - Added version tracking and improved error handling
 const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
@@ -11,10 +23,22 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({
+    hasMinLength: false,
+    hasNumber: false,
+    hasSpecialChar: false
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
+  const validatePassword = (password) => {
+    return {
+      hasMinLength: password.length >= 8,
+      hasNumber: /[0-9]/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,20 +46,38 @@ const Register = () => {
       ...prev,
       [name]: value
     }));
+
+    // Update password strength when password changes
+    if (name === 'password') {
+      setPasswordStrength(validatePassword(value));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    // Basic validation
+    // Password validation
+    const errors = [];
+    
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
+      errors.push('Passwords do not match');
     }
     
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (formData.password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    }
+    
+    if (!/[0-9]/.test(formData.password)) {
+      errors.push('Password must contain at least one number (0-9)');
+    }
+    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      errors.push('Password must contain at least one special character (!@#$%^&*)');
+    }
+    
+    if (errors.length > 0) {
+      setError(errors.join('. '));
       return;
     }
 
@@ -48,13 +90,13 @@ const Register = () => {
         email: formData.email 
       });
       
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      const response = await authApi.register({
         username: formData.username,
         email: formData.email,
         password: formData.password
       });
       
-      console.log('Registration response:', response.data);
+      console.log('Registration response:', response);
       
       // If we get here, registration was successful
       navigate('/login', { 
@@ -66,23 +108,52 @@ const Register = () => {
     } catch (err) {
       console.error('Registration error:', {
         message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        headers: err.response?.headers
+        response: err.response,
+        status: err.status,
+        data: err.data,
+        fullError: err
       });
       
       // Handle different types of errors
       if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        if (err.response.data && err.response.data.error) {
-          setError(err.response.data.error);
-        } else if (err.response.status === 400) {
-          setError('Invalid registration data. Please check your input.');
+        // If we have error data from the API
+        if (err.data && err.data.error) {
+          setError(`Registration failed: ${err.data.error}`);
+          return;
+        }
+        
+        // Try to parse the response as JSON
+        try {
+          const errorData = await err.response.text();
+          console.log('Error response text:', errorData);
+          
+          // Try to parse as JSON if possible
+          try {
+            const jsonData = JSON.parse(errorData);
+            if (jsonData.error) {
+              setError(`Registration failed: ${jsonData.error}`);
+              return;
+            }
+          } catch (e) {
+            // If not JSON, use the text as is
+            if (errorData) {
+              setError(`Registration failed: ${errorData}`);
+              return;
+            }
+          }
+        } catch (jsonError) {
+          console.error('Error parsing error response:', jsonError);
+        }
+        
+        // Handle specific status codes with generic messages
+        if (err.response.status === 400) {
+          setError('Invalid registration data. Please check your input and try again.');
         } else if (err.response.status === 409) {
-          setError('A user with this email already exists.');
+          setError('A user with this email or username already exists.');
+        } else if (err.response.status === 500) {
+          setError('Server error. Please try again later.');
         } else {
-          setError(`Registration failed: ${err.response.status} ${err.response.statusText}`);
+          setError(`Registration failed with status ${err.response.status}: ${err.response.statusText || 'Unknown error'}`);
         }
       } else if (err.request) {
         // The request was made but no response was received
@@ -113,7 +184,7 @@ const Register = () => {
 
   return (
     <div style={{
-      maxWidth: '400px',
+      maxWidth: '500px',
       margin: '2rem auto',
       padding: '2rem',
       borderRadius: '8px',
@@ -131,8 +202,9 @@ const Register = () => {
           color: '#c62828',
           padding: '0.75rem',
           borderRadius: '4px',
-          marginBottom: '1rem',
-          fontSize: '0.9rem'
+          marginBottom: '1.5rem',
+          fontSize: '0.9rem',
+          borderLeft: '4px solid #c62828'
         }}>
           {error}
         </div>
@@ -144,20 +216,22 @@ const Register = () => {
           color: '#2e7d32',
           padding: '0.75rem',
           borderRadius: '4px',
-          marginBottom: '1rem',
-          fontSize: '0.9rem'
+          marginBottom: '1.5rem',
+          fontSize: '0.9rem',
+          borderLeft: '4px solid #2e7d32'
         }}>
           {location.state.registrationSuccess}
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
+      <form onSubmit={handleSubmit} style={{ marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <label htmlFor="username" style={{
             display: 'block',
             marginBottom: '0.5rem',
-            fontWeight: '500',
-            color: '#2c3e50'
+            fontWeight: '600',
+            color: '#2c3e50',
+            fontSize: '0.95rem'
           }}>
             Username
           </label>
@@ -169,23 +243,20 @@ const Register = () => {
             onChange={handleChange}
             required
             style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              boxSizing: 'border-box'
+              ...inputStyle,
+              borderColor: formData.username ? '#2c3e50' : '#ddd'
             }}
             disabled={isLoading}
           />
         </div>
         
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <label htmlFor="email" style={{
             display: 'block',
             marginBottom: '0.5rem',
-            fontWeight: '500',
-            color: '#2c3e50'
+            fontWeight: '600',
+            color: '#2c3e50',
+            fontSize: '0.95rem'
           }}>
             Email Address
           </label>
@@ -197,23 +268,20 @@ const Register = () => {
             onChange={handleChange}
             required
             style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              boxSizing: 'border-box'
+              ...inputStyle,
+              borderColor: formData.email ? '#2c3e50' : '#ddd'
             }}
             disabled={isLoading}
           />
         </div>
         
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <label htmlFor="password" style={{
             display: 'block',
             marginBottom: '0.5rem',
-            fontWeight: '500',
-            color: '#2c3e50'
+            fontWeight: '600',
+            color: '#2c3e50',
+            fontSize: '0.95rem'
           }}>
             Password
           </label>
@@ -225,31 +293,112 @@ const Register = () => {
             onChange={handleChange}
             required
             style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              boxSizing: 'border-box',
+              ...inputStyle,
+              borderColor: formData.password ? '#2c3e50' : '#ddd',
               marginBottom: '0.5rem'
             }}
             disabled={isLoading}
           />
+          
           <div style={{
-            fontSize: '0.75rem',
-            color: '#7f8c8d',
-            marginTop: '0.25rem'
+            backgroundColor: '#f8f9fa',
+            padding: '0.75rem',
+            borderRadius: '4px',
+            marginTop: '0.5rem',
+            border: '1px solid #e9ecef'
           }}>
-            Password must be at least 6 characters long
+            <p style={{ 
+              margin: '0 0 0.5rem 0', 
+              fontWeight: '600',
+              fontSize: '0.85rem',
+              color: '#495057'
+            }}>
+              Password Requirements:
+            </p>
+            <ul style={{ 
+              margin: '0', 
+              paddingLeft: '1.25rem',
+              fontSize: '0.85rem'
+            }}>
+              <li style={{ 
+                color: passwordStrength.hasMinLength ? '#2ecc71' : '#6c757d',
+                marginBottom: '0.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: passwordStrength.hasMinLength ? '#2ecc71' : '#e9ecef',
+                  color: 'white',
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}>
+                  {passwordStrength.hasMinLength ? '✓' : '•'}
+                </span>
+                At least 8 characters
+              </li>
+              <li style={{ 
+                color: passwordStrength.hasNumber ? '#2ecc71' : '#6c757d',
+                marginBottom: '0.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: passwordStrength.hasNumber ? '#2ecc71' : '#e9ecef',
+                  color: 'white',
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}>
+                  {passwordStrength.hasNumber ? '✓' : '•'}
+                </span>
+                At least one number
+              </li>
+              <li style={{ 
+                color: passwordStrength.hasSpecialChar ? '#2ecc71' : '#6c757d',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: passwordStrength.hasSpecialChar ? '#2ecc71' : '#e9ecef',
+                  color: 'white',
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}>
+                  {passwordStrength.hasSpecialChar ? '✓' : '•'}
+                </span>
+                At least one special character (!@#$%^&*)
+              </li>
+            </ul>
           </div>
         </div>
         
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
           <label htmlFor="confirmPassword" style={{
             display: 'block',
             marginBottom: '0.5rem',
-            fontWeight: '500',
-            color: '#2c3e50'
+            fontWeight: '600',
+            color: '#2c3e50',
+            fontSize: '0.95rem'
           }}>
             Confirm Password
           </label>
@@ -261,15 +410,26 @@ const Register = () => {
             onChange={handleChange}
             required
             style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              boxSizing: 'border-box'
+              ...inputStyle,
+              borderColor: formData.confirmPassword 
+                ? (formData.password === formData.confirmPassword ? '#2ecc71' : '#e74c3c')
+                : '#ddd'
             }}
             disabled={isLoading}
           />
+          {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+            <p style={{ 
+              color: '#e74c3c', 
+              margin: '0.5rem 0 0', 
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <span>⚠️</span>
+              <span>Passwords do not match</span>
+            </p>
+          )}
         </div>
         
         <button
@@ -279,12 +439,43 @@ const Register = () => {
             ...buttonStyle,
             opacity: isLoading ? 0.7 : 1,
             cursor: isLoading ? 'not-allowed' : 'pointer',
-            backgroundColor: isLoading ? '#2c3e50' : '#2c3e50'
+            backgroundColor: '#2c3e50',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.3s ease',
+            border: 'none',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
           }}
-          onMouseOver={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#4ba1a4')}
+          onMouseOver={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#1a252f')}
           onMouseOut={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#2c3e50')}
         >
-          {isLoading ? 'Creating Account...' : 'Create Account'}
+          {isLoading ? (
+            <>
+              <span style={{ visibility: 'hidden' }}>Create Account</span>
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTopColor: '#fff',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  '@keyframes spin': {
+                    to: { transform: 'rotate(360deg)' }
+                  }
+                }} />
+                <span>Creating Account...</span>
+              </div>
+            </>
+          ) : 'Create Account'}
         </button>
       </form>
       

@@ -5,9 +5,21 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { authenticateToken } = require('../middleware/auth');
 
-// Register
+// Register page (GET)
+router.get('/register', (req, res) => {
+  res.json({ message: 'Registration page' });
+});
+
+// Handle registration (POST)
 router.post('/register', async (req, res) => {
   try {
+    console.log('Register request received:', {
+      body: req.body,
+      headers: req.headers,
+      url: req.originalUrl,
+      method: req.method
+    });
+    
     const { username, email, password } = req.body;
     
     // Check if user exists
@@ -20,105 +32,57 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
-    const [user] = await db('users')
-      .insert({
-        username,
-        email,
-        password_hash: hashedPassword
-      })
-      .returning(['id', 'username', 'email']);
+    try {
+      // Create user with all required fields for the database schema
+      const now = new Date().toISOString();
+      const [user] = await db('users')
+        .insert({
+          username,
+          email,
+          password_hash: hashedPassword,
+          created_at: now,
+          updated_at: now,
+          stripe_customer_id: null,
+          subscription_status: 'inactive',
+          subscription_ends_at: null
+        })
+        .returning(['id', 'username', 'email']);
 
-    // Create token
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your-secret-key', {
-      expiresIn: '1d'
-    });
+      // Create token
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your-secret-key', {
+        expiresIn: '1d'
+      });
 
-    res.status(201).json({ user, token });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Login
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Check if user exists
-    const user = await db('users').where({ email }).first();
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
-    }
-
-    // Create token
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'your-secret-key', {
-      expiresIn: '1d'
-    });
-
-    res.json({ 
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email
-      }, 
-      token 
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get current user
-router.get('/me', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    const user = await db('users')
-      .where({ id: decoded.id })
-      .select('id', 'username', 'email')
-      .first();
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json(user);
-  } catch (error) {
-    console.error(error);
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-});
-
-// Get current user
-router.get('/me', authenticateToken, async (req, res) => {
-  try {
-    const user = await db('users')
-      .where({ id: req.user.id })
-      .select('id', 'username', 'email', 'role', 'subscription_status')
-      .first();
+      return res.status(201).json({ user, token });
+    } catch (dbError) {
+      console.error('Database error during registration:', {
+        message: dbError.message,
+        code: dbError.code,
+        detail: dbError.detail,
+        table: dbError.table,
+        column: dbError.column,
+        constraint: dbError.constraint,
+        stack: dbError.stack
+      });
       
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(500).json({
+        error: 'Database error during registration',
+        details: process.env.NODE_ENV === 'development' ? dbError.message : undefined,
+        code: dbError.code
+      });
     }
-    
-    res.json({ user });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Unexpected error during registration:', {
+      message: error.message,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      error: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
+// Export the router
 module.exports = router;

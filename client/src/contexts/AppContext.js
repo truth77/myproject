@@ -13,8 +13,12 @@ export const AppProvider = ({ children }) => {
   // Load user on initial render
   useEffect(() => {
     let isMounted = true;
+    let timer;
     
     const loadUser = async () => {
+      // Add a small delay to prevent rapid state updates
+      await new Promise(resolve => timer = setTimeout(resolve, 100));
+      
       // Skip if we already know the user is not authenticated (e.g., from localStorage)
       const token = localStorage.getItem('token');
       if (!token) {
@@ -28,16 +32,27 @@ export const AppProvider = ({ children }) => {
 
       try {
         const userData = await authApi.getCurrentUser();
-        if (isMounted && userData) {
-          // Check if user is admin
-          const isAdmin = userData.role === 'admin' || userData.isAdmin === true;
-          if (isAdmin) {
+        if (!isMounted) return;
+        
+        if (userData) {
+          // Batch state updates
+          const updates = {
+            isAdmin: userData.role === 'admin' || userData.isAdmin === true,
+            role: userData.role || 'user'
+          };
+          
+          if (updates.isAdmin) {
             userData.isAdmin = true;
             userData.role = 'admin';
           }
-          setUser(userData);
+          
+          setUser(prev => ({
+            ...prev,
+            ...userData,
+            ...updates
+          }));
           setIsAuthenticated(true);
-        } else if (isMounted) {
+        } else {
           // If no user data but we had a token, clear it
           localStorage.removeItem('token');
           setUser(null);

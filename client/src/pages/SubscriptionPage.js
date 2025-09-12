@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSubscription } from '../contexts/SubscriptionContext';
+import { useNewSubscription as useSubscription } from '../contexts/NewSubscriptionContext';
 import SubscriptionPlans from '../components/Subscription/SubscriptionPlans';
 import './SubscriptionPage.css';
 

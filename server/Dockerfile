@@ -1,5 +1,5 @@
 # Build stage
-FROM node:16-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
@@ -16,7 +16,7 @@ RUN npm install --legacy-peer-deps
 RUN apk del .build-deps
 
 # Runtime stage
-FROM node:16-alpine
+FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
@@ -37,9 +37,9 @@ ENV NODE_OPTIONS=--max-old-space-size=1024
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check - check if Node.js process is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the application
 CMD ["node", "server.js"]

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useNewSubscription } from '../../contexts/NewSubscriptionContext';
 
 const ProtectedRoute = ({ children, requireSubscription = false }) => {
   const location = useLocation();
-  const { subscription, loading } = useSubscription();
+  const { subscription, loading } = useNewSubscription();
 
   // If still loading, show a loading state or null
   if (loading) {

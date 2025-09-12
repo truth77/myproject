@@ -1,18 +1,20 @@
 {
   "presets": [
-    "es2015",
-    "react",
-    "stage-1"
+    ["@babel/preset-env", {
+      "useBuiltIns": "entry",
+      "corejs": 3,
+      "targets": "> 0.25%, not dead"
+    }],
+    ["@babel/preset-react", {
+      "runtime": "automatic"
+    }]
   ],
   "plugins": [
-    ["transform-runtime", {
-      "helpers": false,
-      "polyfill": false,
-      "regenerator": true,
-      "moduleName": "babel-runtime"
-    },
-    "transform-function-bind",
-    "transform-deceorators-legacy"
-    ]
+    ["@babel/plugin-transform-runtime", {
+      "regenerator": true
+    }],
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
+    ["@babel/plugin-proposal-class-properties", { "loose": true }],
+    "@babel/plugin-transform-react-jsx"
   ]
 }

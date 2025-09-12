@@ -1,9 +1,9 @@
 import React from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
-import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useNewSubscription } from '../../contexts/NewSubscriptionContext';
 
 const SubscriptionRequired = ({ children }) => {
-  const { subscription, loading } = useSubscription();
+  const { subscription, loading } = useNewSubscription();
   const location = useLocation();
 
   if (loading) {

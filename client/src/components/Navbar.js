@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../contexts/AppContext';
 import { useNewSubscription } from '../contexts/NewSubscriptionContext';
+import Breadcrumb from './Breadcrumb';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAppContext();
@@ -41,11 +42,11 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { to: "/bible-study", text: "Bible Study" },
-    { to: "/prayer", text: "Prayer Network" },
-    { to: "/courses", text: "Online Courses" },
-    { to: "/live", text: "Live Services" },
-    { to: "/plant-churches", text: "Plant Churches" },
+    { to: "/bible-study", text: "Bible" },
+    { to: "/prayer", text: "Prayer" },
+    { to: "/courses", text: "Courses" },
+    { to: "/live", text: "Live" },
+    { to: "/plant-churches", text: "Churches" },
     ...(isAuthenticated ? [
       { to: "/premium-content", text: "Premium Content" },
       { to: "/profile", text: "My Profile" },
@@ -54,22 +55,44 @@ const Navbar = () => {
   ];
 
   return (
-    <nav style={{
+    <div style={{
       width: '100%',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: isMobileView ? '0 1rem 2px 5%' : '0 15% 2px',
-      position: 'relative',
-      boxSizing: 'border-box'
+      backgroundColor: '#2c3e50',
+      padding: '0 1rem',
+      borderBottomLeftRadius: '8px',
+      borderBottomRightRadius: '8px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }}>
+      <div style={{
+        maxWidth: '1400px',
+        margin: '0 auto',
+        width: '100%'
+      }}>
+        <div style={{
+          width: '100%',
+          padding: 0,
+          margin: 0,
+          boxSizing: 'border-box',
+          overflow: 'visible'
+        }}>
+        <nav style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          height: 'auto',
+          minHeight: 0,
+          overflow: 'visible',
+          margin: 0,
+          padding: 0
+        }}>
       <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <img 
             src={`${process.env.PUBLIC_URL}/images/ARK-Network-logo.png`} 
             alt="ARK Network Logo" 
             style={{ 
-              height: isMobileView ? '58px' : '70px',
+              height: isMobileView ? '65px' : '75px',
               width: 'auto',
               flexShrink: 0
             }} 
@@ -78,10 +101,11 @@ const Navbar = () => {
             display: 'flex', 
             flexDirection: 'column',
             marginLeft: isMobileView ? '6px' : '3px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            justifyContent: 'center'
           }}>
             <span style={{ 
-              fontSize: isMobileView ? '1.3rem' : '1.4rem',
+              fontSize: isMobileView ? '1.6rem' : '1.8rem',
               fontWeight: 'bold', 
               color: 'white',
               lineHeight: 1.2,
@@ -111,7 +135,9 @@ const Navbar = () => {
         style={{
           display: isMobileView ? 'block' : 'none',
           cursor: 'pointer',
-          zIndex: 1001
+          zIndex: 1001,
+          paddingRight: '1.5rem',
+          paddingTop: '0.5rem'
         }}
         onClick={toggleMobileMenu}
       >
@@ -217,7 +243,7 @@ const Navbar = () => {
                   background: 'transparent',
                   border: '1px solid white',
                   color: 'white',
-                  padding: '0.5rem 1rem',
+                  padding: '0.8rem 1.4rem',
                   borderRadius: '4px',
                   textDecoration: 'none',
                   cursor: 'pointer',
@@ -246,7 +272,7 @@ const Navbar = () => {
                 style={{
                   color: 'white',
                   textDecoration: 'none',
-                  padding: '0.5rem 1rem',
+                  padding: '0.8rem 1.4rem',
                   border: '1px solid white',
                   borderRadius: '4px',
                   width: isMobileView ? '100%' : 'auto',
@@ -273,13 +299,15 @@ const Navbar = () => {
                   backgroundColor: 'white',
                   color: '#2c3e50',
                   textDecoration: 'none',
-                  padding: '0.5rem 1rem',
+                  padding: '0.8rem 1.4rem',
+                  marginRight: '1.5rem',
                   borderRadius: '4px',
-                  fontWeight: '500',
-                  width: isMobileView ? '100%' : 'auto',
-                  textAlign: 'center',
-                  transition: 'all 0.2s ease',
-                  display: 'inline-block'
+                  transition: 'all 0.3s ease',
+                  border: '1px solid white',
+                  ':hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'white'
+                  }
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.backgroundColor = '#4ba1a4';
@@ -297,7 +325,11 @@ const Navbar = () => {
           )}
         </div>
       )}
-    </nav>
+        </nav>
+      </div>
+      <Breadcrumb />
+    </div>
+  </div>
   );
 };
 

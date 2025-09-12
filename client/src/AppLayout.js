@@ -69,35 +69,41 @@ const AppLayout = () => {
   }
 
   return (
-    <div className="App" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header style={{
-        backgroundColor: '#2c3e50',
-        padding: '1rem 2rem',
-        color: 'white',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {/* Navbar includes the Breadcrumb component */}
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 1100, 
+        width: '100%',
+        backgroundColor: '#2c3e50'
       }}>
         <Navbar />
-      </header>
+      </div>
+      <div style={{ height: '80px' }} /> {/* Spacer to prevent content from being hidden behind fixed header */}
       
-      <main style={{
+      <div style={{
         flex: 1,
-        padding: isMobileView ? '1rem' : '2rem',
-        paddingTop: isMobileView ? '80px' : '100px',
-        paddingBottom: '2rem',
-        maxWidth: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         width: '100%',
-        margin: 0,
+        maxWidth: '1400px',
+        margin: '0 auto',
         boxSizing: 'border-box',
-        overflowX: 'hidden',
-        minHeight: 'calc(100vh - 200px)'
+        padding: isMobileView ? '0 1rem' : '0 2rem'
       }}>
+        <main style={{
+          flex: 1,
+          paddingTop: '1rem',
+          paddingBottom: '2rem',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowX: 'hidden',
+          minHeight: 'calc(100vh - 280px)'
+        }}>
         <ScrollToTop />
-        <Breadcrumb />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/subscription" element={<SubscriptionPlans />} />
@@ -178,9 +184,10 @@ const AppLayout = () => {
             </SubscriptionRequired>
           } />
         </Routes>
-      </main>
-      
-      <Footer />
+        </main>
+        
+        <Footer />
+      </div>
       
       {/* Version display in corner */}
       <div style={{ position: 'fixed', bottom: 10, left: 10, zIndex: 1000 }}>

@@ -10,21 +10,22 @@ const Footer = () => {
       backgroundPosition: 'center center',
       backgroundRepeat: 'no-repeat',
       color: 'white',
-      padding: '2rem 1rem',
+      padding: '2rem 0',
       borderTopLeftRadius: '12px',
       borderTopRightRadius: '12px',
       marginTop: '3rem',
-      borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+      width: '100%'
     }}>
       <Box sx={{
-        maxWidth: '1200px',
-        margin: '0 auto',
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
         gap: '1.5rem',
-        padding: '0 2rem'
+        padding: '0 1rem'  // Added padding for mobile
       }}>
+        {/* Social Media Icons */}
         <Box sx={{
           display: 'flex',
           gap: '1.5rem',
@@ -130,17 +131,24 @@ const Footer = () => {
         
         <Box sx={{
           marginTop: '1rem',
-          paddingTop: '1.5rem',
+          padding: '1.5rem 1rem 0',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           fontSize: '0.9rem',
           opacity: 0.8,
-          width: '100%'
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           {new Date().getFullYear()} ARK Network. All rights reserved.
         </Box>
         
         {/* Version display in the footer */}
-        <Box sx={{ width: '100%', textAlign: 'center', opacity: 0.7, fontSize: '0.8rem' }}>
+        <Box sx={{ 
+          width: '100%', 
+          textAlign: 'center', 
+          opacity: 0.7, 
+          fontSize: '0.8rem',
+          padding: '0 1rem 1rem'  // Added padding to match the rest of the footer
+        }}>
           <VersionDisplay />
         </Box>
       </Box>

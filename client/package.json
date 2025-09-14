@@ -3,7 +3,7 @@
   "version": "1.1.2",
   "private": true,
   "scripts": {
-    "start": "set PORT=3002 && set HOST=0.0.0.0 && set WDS_SOCKET_PORT=3002 && set FAST_REFRESH=true && set CHOKIDAR_USEPOLLING=true && react-scripts start",
+    "start": "set PORT=3002 && set WDS_SOCKET_PORT=3002 && set FAST_REFRESH=true && set CHOKIDAR_USEPOLLING=true && react-scripts start",
     "prebuild": "node scripts/update-version.js",
     "build": "react-scripts build",
     "test": "react-scripts test",

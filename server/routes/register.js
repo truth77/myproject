@@ -6,12 +6,36 @@ const db = require('../db');
 
 // Register route
 router.post('/', async (req, res) => {
+  // Set CORS headers
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
+    return res.status(200).end();
+  }
+  
   try {
     console.log('=== NEW REGISTRATION REQUEST ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Raw body:', req.body);
+    console.log('Content-Type:', req.get('Content-Type'));
     
-    const { username, email, password } = req.body;
+    // Parse JSON body if needed
+    let body = req.body;
+    if (typeof body === 'string' || body === undefined) {
+      try {
+        body = JSON.parse(body || '{}');
+      } catch (e) {
+        console.error('Error parsing JSON body:', e);
+        return res.status(400).json({ error: 'Invalid JSON in request body' });
+      }
+    }
+    
+    const { username, email, password } = body;
 
     // Validate input
     if (!username || !email || !password) {

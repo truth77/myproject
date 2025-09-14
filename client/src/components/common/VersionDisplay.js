@@ -19,7 +19,7 @@ const VersionContainer = styled('div')({
 });
 
 const VersionDisplay = () => {
-  const [version, setVersion] = useState('1.0.0');
+  const [version, setVersion] = useState('2.1.3');
 
   useEffect(() => {
     // This will be updated during the build process

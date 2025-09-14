@@ -86,7 +86,9 @@ export const authApi = {
   // Login
   login: async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      // Ensure we're using the correct base URL without double /api
+      const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,43 +114,62 @@ export const authApi = {
   // Register
   register: async (userData) => {
     try {
-      const registerUrl = `${API_BASE_URL}/register`;
+      // Remove the /api from the URL since it's already included in the base URL
+      const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const registerUrl = `${baseUrl}/api/register`;
       
       console.log('Sending registration request to:', registerUrl);
-      console.log('Request payload:', userData);
+      console.log('Request payload:', { 
+        ...userData, 
+        password: userData.password ? '***' : undefined 
+      });
       
       const response = await fetch(registerUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify(userData),
-        credentials: 'include'
+        credentials: 'include',
+        mode: 'cors'
       });
       
       console.log('Registration response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       // Handle non-JSON responses
-      const contentType = response.headers.get('content-type');
-      let responseData = {};
+      const contentType = response.headers.get('content-type') || '';
+      let responseData;
       
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else {
-        const text = await response.text();
-        console.warn('Non-JSON response received:', text);
-        throw new Error(`Unexpected response format: ${contentType}`);
+      try {
+        responseData = await response.text();
+        if (contentType.includes('application/json')) {
+          responseData = JSON.parse(responseData);
+        }
+      } catch (parseError) {
+        console.warn('Error parsing response:', parseError);
+        throw new Error(`Failed to parse response: ${parseError.message}`);
       }
       
       console.log('Registration response data:', responseData);
       
       if (!response.ok) {
-        const error = new Error(responseData.error || `Registration failed with status ${response.status}`);
+        const error = new Error(
+          (responseData && responseData.error) || 
+          (typeof responseData === 'string' && responseData) || 
+          `Registration failed with status ${response.status}`
+        );
         error.response = response;
         error.status = response.status;
         error.data = responseData;
         throw error;
+      }
+      
+      // If we got a token in the response, store it
+      if (responseData && responseData.token) {
+        localStorage.setItem('token', responseData.token);
       }
       
       return responseData;

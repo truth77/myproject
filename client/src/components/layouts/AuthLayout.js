@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, Container } from '@mui/material';
 import Navbar from '../Navbar';
@@ -6,49 +6,94 @@ import Footer from '../common/Footer';
 import VersionDisplay from '../common/VersionDisplay';
 import Breadcrumb from '../Breadcrumb';
 import ScrollToTop from '../ScrollToTop';
+import { useAppContext } from '../../contexts/AppContext';
 
 const AuthLayout = () => {
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth < 768);
+  const { loading } = useAppContext();
+  const resizeTimeout = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+      }
+      
+      resizeTimeout.current = setTimeout(() => {
+        const mobile = window.innerWidth < 768;
+        setIsMobileView(prev => prev !== mobile ? mobile : prev);
+      }, 100);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
+    
+    return () => {
+      if (resizeTimeout.current) {
+        clearTimeout(resizeTimeout.current);
+      }
+      window.removeEventListener('resize', handleResize, { passive: true });
+    };
   }, []);
 
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        width: '100vw',
+        backgroundColor: '#f5f7fa'
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="App" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', margin: 0, padding: 0, width: '100%' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', width: '100%' }}>
       {/* Navbar includes the Breadcrumb component */}
-      <Navbar />
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 1100, 
+        width: '100%',
+        backgroundColor: '#2c3e50'
+      }}>
+        <Navbar />
+      </div>
+      <div style={{ height: '80px' }} /> {/* Spacer to prevent content from being hidden behind fixed header */}
       
-      {/* Main Content */}
-      <Box
-        component="main"
-        sx={{
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        boxSizing: 'border-box',
+        padding: isMobileView ? '0 1rem' : '0 2rem'
+      }}>
+        <main style={{
           flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: isMobileView ? '1rem' : '2rem',
-          paddingTop: isMobileView ? '100px' : '120px',
+          paddingTop: '1rem',
           paddingBottom: '2rem',
           width: '100%',
-          maxWidth: '1400px',
-          margin: '0 auto',
           boxSizing: 'border-box',
-          backgroundColor: '#f5f5f5',
-          minHeight: 'calc(100vh - 200px)'
-        }}
-      >
-        <ScrollToTop />
-        <Container maxWidth="sm">
-          <Outlet />
-        </Container>
-      </Box>
+          overflowX: 'hidden',
+          minHeight: 'calc(100vh - 280px)'
+        }}>
+          <ScrollToTop />
+          <Container maxWidth="sm" sx={{ margin: '0 auto' }}>
+            <Breadcrumb />
+            <Box sx={{ marginTop: '1rem' }}>
+              <Outlet />
+            </Box>
+          </Container>
+        </main>
+      </div>
       
       <Footer />
       

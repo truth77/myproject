@@ -15,16 +15,30 @@ require('./db');
 
 // CORS Configuration
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3002',
-    'http://localhost:3003',
-    'http://127.0.0.1:3002'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      'http://127.0.0.1:3002'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+      console.warn(msg);
+      return callback(new Error(msg), false);
+    }
+    
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   credentials: true,
-  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200,
+  preflightContinue: true
 };
 
 // Apply CORS with the specified options

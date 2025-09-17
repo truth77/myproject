@@ -32,7 +32,8 @@ RUN npm install --only=production --legacy-peer-deps
 # Set environment variables
 ENV NODE_ENV=development
 ENV PORT=3000
-ENV NODE_OPTIONS=--max-old-space-size=1024
+ENV NODE_OPTIONS=--max-old-space-size=2048
+ENV DISABLE_MEMORY_MONITORING=true
 
 # Expose port
 EXPOSE 3000

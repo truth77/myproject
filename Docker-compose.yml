@@ -14,6 +14,7 @@ services:
       - WDS_SOCKET_PATH=/sockjs-node
       - WATCHPACK_POLLING=true
       - FAST_REFRESH=true
+      - DISABLE_MEMORY_MONITORING=true
     ports:
       - "3002:3000"
     volumes:
@@ -37,10 +38,10 @@ services:
       resources:
         limits:
           cpus: '2.0'
-          memory: 4G
+          memory: 6G
         reservations:
           cpus: '1.0'
-          memory: 2G
+          memory: 4G
 
   backend:
     build:
@@ -52,12 +53,12 @@ services:
     environment:
       NODE_ENV: development
       NODE_OPTIONS: --max-old-space-size=2048
-      DB_HOST: postgres
+      DB_HOST: bible-postgres
       DB_PORT: 5432
       DB_NAME: bible
       DB_USER: postgres
-      DB_PASSWORD: postgres
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bible?schema=public
+      DB_PASSWORD: C00kies$$$
+      DATABASE_URL: postgresql://postgres:C00kies$$$@bible-postgres:5432/bible?schema=public
       SESSION_SECRET: your-session-secret
       FRONTEND_URL: http://localhost:3003
       JWT_SECRET: your-jwt-secret
@@ -96,27 +97,21 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: bible-postgres
-    env_file:
-      - ./.env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-md5}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=C00kies$$$
+      - POSTGRES_DB=bible
     ports:
       - "5432:5432"
-    networks:
-      - bible-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-bible}"]
-      interval: 15s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bible"]
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 20s
+    networks:
+      - bible-network
     deploy:
       resources:
         limits:

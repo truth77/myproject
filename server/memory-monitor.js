@@ -3,15 +3,20 @@ const path = require('path');
 const { performance, PerformanceObserver } = require('perf_hooks');
 const v8 = require('v8');
 
-// Only run in development
-if (process.env.NODE_ENV === 'development') {
+// Only run in development and if not explicitly disabled
+if (process.env.NODE_ENV === 'development' && process.env.DISABLE_MEMORY_MONITORING !== 'true') {
   const LOG_INTERVAL = 60000; // 1 minute
   const LOG_FILE = path.join(__dirname, 'memory-usage.log');
   
   // Write header to log file
   const header = 'Timestamp, RSS (MB), Heap Total (MB), Heap Used (MB), External (MB), Array Buffers (MB), Garbage Collection (ms)\n';
-  if (!fs.existsSync(LOG_FILE)) {
-    fs.writeFileSync(LOG_FILE, header, 'utf8');
+  
+  try {
+    if (!fs.existsSync(LOG_FILE)) {
+      fs.writeFileSync(LOG_FILE, header);
+    }
+  } catch (err) {
+    console.error('Error initializing memory log file:', err);
   }
 
   // Track garbage collection
@@ -60,4 +65,6 @@ if (process.env.NODE_ENV === 'development') {
   });
 
   console.log('Memory monitoring started. Logging to', LOG_FILE);
+} else if (process.env.DISABLE_MEMORY_MONITORING === 'true') {
+  console.log('Memory monitoring is disabled via DISABLE_MEMORY_MONITORING environment variable');
 }

@@ -267,7 +267,7 @@ const Navbar = () => {
           ) : (
             <>
               <Link
-                to="/login"
+                to="/about"
                 state={{ from: location.pathname }}
                 style={{
                   color: 'white',
@@ -291,10 +291,10 @@ const Navbar = () => {
                 }}
                 onClick={closeMobileMenu}
               >
-                Login
+                About Us
               </Link>
               <Link
-                to="/register"
+                to="/donate"
                 style={{
                   backgroundColor: 'white',
                   color: '#2c3e50',
@@ -319,7 +319,7 @@ const Navbar = () => {
                 }}
                 onClick={closeMobileMenu}
               >
-                Register
+                Donate
               </Link>
             </>
           )}

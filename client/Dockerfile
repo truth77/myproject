@@ -8,7 +8,7 @@ ENV NODE_ENV=development
 ENV PORT=3000
 ENV CHOKIDAR_USEPOLLING=true
 ENV WDS_SOCKET_PORT=0
-ENV REACT_APP_API_URL=http://localhost:3001
+# Removed hardcoded REACT_APP_API_URL to allow override from docker-compose
 
 # Copy package files first for better caching
 COPY package*.json ./

@@ -8,11 +8,17 @@ import Plans from '../pages/admin/Plans';
 import Transactions from '../pages/admin/Transactions';
 
 const AdminRoutes = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
 
-  // Check if user is admin (you might want to implement proper role-based access control)
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.isAdmin;
+  // Show loading state while checking auth
+  if (loading) {
+    return <div>Loading admin dashboard...</div>;
+  }
 
+  // Check if user is admin or superadmin
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin');
+
+  // Redirect to home if not an admin
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }

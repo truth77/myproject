@@ -39,19 +39,19 @@ const ensureAuthenticated = (req, res, next) => {
 /**
  * @param id {string} - User ID from db
  * @param username {string} - User display name
+ * @param role {string} - User role
  * @param avatar {string} - URL of Facebook profile picture (optional)
  * @returns {string} - Encoded JWT
  */
-const encodeToken = ({ id, username, avatar }) => {
+const encodeToken = ({ id, username, role, avatar }) => {
     const payload = {
         id,
         username,
-        avatar,
+        role: role || 'user', // Default to 'user' role if not provided
+        ...(avatar && { avatar }), // Only include avatar if it exists
     };
 
-    return jwt.sign(payload, process.env.TOKEN_SECRET, {
-        expiresIn: '14 days',
-    });
+    return jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: '7d' });
 };
 
 module.exports = {
@@ -60,4 +60,3 @@ module.exports = {
     encodeToken,
     verifyToken,
 };
-

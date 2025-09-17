@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, Paper, Grid, Button, Box, CircularProgress, Card, CardContent, CardHeader, Divider, Snackbar, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../../contexts/AppContext';
-import LiveServices from '../../components/services/LiveServices';
+import { useAppContext } from '../contexts/AppContext';
+import LiveServices from '../components/services/LiveServices';
 
 const StyledCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -12,7 +12,7 @@ const StyledCard = styled(Paper)(({ theme }) => ({
   boxShadow: theme.shadows[3],
 }));
 
-const Dashboard = () => {
+const AdminDashboard = () => {
   const { user } = useAppContext();
   const navigate = useNavigate();
   const [dbStatus, setDbStatus] = useState({
@@ -257,4 +257,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;

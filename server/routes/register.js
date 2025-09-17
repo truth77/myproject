@@ -63,13 +63,14 @@ router.post('/', async (req, res) => {
         username,
         email,
         password_hash: hashedPassword,
+        role: 'user', // Default role
         created_at: now,
         updated_at: now,
         stripe_customer_id: null,
         subscription_status: 'inactive',
         subscription_ends_at: null
       })
-      .returning(['id', 'username', 'email', 'subscription_status', 'subscription_ends_at']);
+      .returning(['id', 'username', 'email', 'subscription_status', 'subscription_ends_at', 'role']);
 
     // Create JWT token
     const token = jwt.sign(

@@ -1,10 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const stripeService = require('../services/stripeService');
-const db = require('../db');
-const { authenticateJWT } = require('../middleware/auth');
 const { check, validationResult } = require('express-validator');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const db = require('../db');
+const { authenticateToken } = require('../middleware/auth');
+
+// Verify Stripe is properly initialized
+if (!stripe) {
+  console.error('Stripe is not properly initialized');
+  throw new Error('Stripe is not properly initialized');
+}
+
+// Basic route to verify the API is working
+router.get('/', (req, res) => {
+  res.status(200).json({ 
+    success: true,
+    message: 'Subscriptions API is working',
+    endpoints: {
+      getPlans: 'GET /plans',
+      createCheckout: 'POST /checkout-session',
+      getSubscriptions: 'GET /user',
+      cancelSubscription: 'POST /cancel'
+    }
+  });
+});
 
 /**
  * @route   GET /api/subscriptions/plans
@@ -13,41 +32,30 @@ const { check, validationResult } = require('express-validator');
  */
 router.get('/plans', async (req, res) => {
   try {
-    // Group plans by type (weekly, monthly, yearly, one_time)
-    const plans = await stripeService.getSubscriptionPlans();
-    
-    const groupedPlans = plans.reduce((acc, plan) => {
-      const type = plan.interval === 'one_time' ? 'one_time' : 'subscription';
-      if (!acc[type]) acc[type] = [];
-      acc[type].push(plan);
-      return acc;
-    }, {});
-    
+    // Get all products with their prices
+    const products = await stripe.products.list({
+      active: true,
+      expand: ['data.default_price']
+    });
+
+    // Format the response
+    const plans = products.data.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.default_price
+    }));
+
     res.json({
       success: true,
-      data: {
-        subscription: [
-          {
-            name: 'Weekly',
-            plans: groupedPlans.subscription?.filter(p => p.interval === 'week') || []
-          },
-          {
-            name: 'Monthly',
-            plans: groupedPlans.subscription?.filter(p => p.interval === 'month') || []
-          },
-          {
-            name: 'Yearly',
-            plans: groupedPlans.subscription?.filter(p => p.interval === 'year') || []
-          }
-        ],
-        one_time: groupedPlans.one_time || []
-      }
+      data: plans
     });
   } catch (error) {
     console.error('Error fetching subscription plans:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to fetch subscription plans' 
+      error: 'Failed to fetch subscription plans',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -59,7 +67,7 @@ router.get('/plans', async (req, res) => {
  */
 router.post(
   '/checkout-session',
-  authenticateJWT,
+  authenticateToken,
   [
     check('priceId').not().isEmpty().withMessage('Price ID is required'),
     check('isSubscription').optional().isBoolean().withMessage('isSubscription must be a boolean')
@@ -84,248 +92,200 @@ router.post(
       }
 
       // Get or create Stripe customer
-      const customer = await stripeService.getOrCreateCustomer(user);
-      
-      // Get price details to determine if it's a subscription or one-time payment
+      let customer;
+      if (user.stripe_customer_id) {
+        customer = await stripe.customers.retrieve(user.stripe_customer_id);
+      } else {
+        customer = await stripe.customers.create({
+          email: user.email,
+          name: user.username,
+          metadata: { userId: user.id }
+        });
+        
+        // Save the customer ID to the user
+        await db('users')
+          .where({ id: user.id })
+          .update({ stripe_customer_id: customer.id });
+      }
+
+      // Get price details
       const price = await stripe.prices.retrieve(priceId);
       const isRecurring = price.type === 'recurring';
 
-      // Create appropriate checkout session
-      let session;
-      if (isRecurring) {
-        // For subscriptions
-        session = await stripe.checkout.sessions.create({
-          customer: customer.id,
-          payment_method_types: ['card'],
-          subscription_data: {
-            metadata: {
-              userId: user.id.toString(),
-              priceId: priceId
-            },
-          },
-          line_items: [{
-            price: priceId,
-            quantity: 1,
-          }],
-          mode: 'subscription',
-          success_url: `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${process.env.FRONTEND_URL}/subscription/canceled`,
-        });
-      } else {
-        // For one-time payments
-        session = await stripe.checkout.sessions.create({
-          customer: customer.id,
-          payment_method_types: ['card'],
-          line_items: [{
-            price: priceId,
-            quantity: 1,
-          }],
-          mode: 'payment',
-          success_url: `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${process.env.FRONTEND_URL}/subscription/canceled`,
-          metadata: {
-            userId: user.id.toString(),
-            priceId: priceId,
-            type: 'one_time'
-          },
-        });
-      }
+      // Create checkout session
+      const session = await stripe.checkout.sessions.create({
+        customer: customer.id,
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1,
+        }],
+        mode: isRecurring ? 'subscription' : 'payment',
+        success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
+        metadata: {
+          userId: user.id,
+          priceId: priceId,
+          isSubscription: isRecurring
+        }
+      });
 
       res.json({ 
         success: true, 
-        data: { 
-          sessionId: session.id,
-          url: session.url
-        }
+        sessionId: session.id 
       });
+
     } catch (error) {
       console.error('Error creating checkout session:', error);
       res.status(500).json({ 
         success: false,
-        error: error.message || 'Failed to create checkout session' 
+        error: 'Failed to create checkout session',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
 );
 
 /**
- * @route   POST /api/subscriptions/webhook
- * @desc    Handle Stripe webhook events
- * @access  Public (Stripe will call this endpoint)
- */
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const payload = req.body;
-  
-  try {
-    // Verify the webhook signature
-    const event = await stripeService.handleWebhook(payload, sig);
-    res.json(event);
-  } catch (err) {
-    console.error('Webhook error:', err);
-    return res.status(400).json({ error: `Webhook Error: ${err.message}` });
-  }
-});
-
-/**
- * @route   GET /api/subscriptions/customer-portal
- * @desc    Create a customer portal session for managing subscription
+ * @route   GET /api/subscriptions/user
+ * @desc    Get current user's subscriptions
  * @access  Private
  */
-router.get('/customer-portal', authenticateJWT, async (req, res) => {
+router.get('/user', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const user = await db('users').where({ id: userId }).first();
+    const user = await db('users').where({ id: req.user.id }).first();
     
-    if (!user || !user.stripe_customer_id) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'No subscription found' 
+    if (!user.stripe_customer_id) {
+      return res.json({ 
+        success: true, 
+        data: { subscriptions: [], customer: null } 
       });
     }
 
-    const session = await stripeService.createPortalSession(
-      user.stripe_customer_id,
-      `${process.env.FRONTEND_URL}/account`
-    );
+    const subscriptions = await stripe.subscriptions.list({
+      customer: user.stripe_customer_id,
+      status: 'all',
+      expand: ['data.default_payment_method']
+    });
 
     res.json({ 
-      success: true,
-      data: { url: session.url } 
+      success: true, 
+      data: { 
+        subscriptions: subscriptions.data,
+        customer: {
+          id: user.stripe_customer_id,
+          email: user.email
+        }
+      } 
     });
   } catch (error) {
-    console.error('Error creating portal session:', error);
+    console.error('Error fetching user subscriptions:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to create customer portal session' 
-    });
-  }
-});
-
-/**
- * @route   GET /api/subscriptions/my-subscription
- * @desc    Get the current user's subscription status and details
- * @access  Private
- */
-router.get('/my-subscription', authenticateJWT, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    // Get user with subscription details
-    const subscription = await stripeService.getUserSubscription(userId);
-    
-    // Get user's payment history
-    const payments = await db('payments')
-      .where({ user_id: userId })
-      .orderBy('created_at', 'desc')
-      .limit(10);
-
-    res.json({
-      success: true,
-      data: {
-        subscription,
-        paymentHistory: payments.map(payment => ({
-          id: payment.id,
-          amount: payment.amount / 100, // Convert to dollars
-          currency: payment.currency,
-          status: payment.status,
-          createdAt: payment.created_at,
-          billingDetails: payment.billing_details
-        }))
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching user subscription:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Failed to fetch subscription details' 
+      error: 'Failed to fetch subscriptions',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
 /**
  * @route   POST /api/subscriptions/cancel
- * @desc    Cancel the current user's subscription at period end
+ * @desc    Cancel a subscription
  * @access  Private
  */
-router.post('/cancel', authenticateJWT, async (req, res) => {
+router.post('/cancel', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const { subscriptionId } = req.body;
     
-    // Get user's active subscription
-    const subscription = await db('subscriptions')
-      .where({ user_id: userId, status: 'active' })
-      .first();
-      
-    if (!subscription) {
+    if (!subscriptionId) {
       return res.status(400).json({
         success: false,
-        error: 'No active subscription found'
+        error: 'Subscription ID is required'
       });
     }
-    
-    // Cancel the subscription at period end
-    await stripeService.cancelSubscription(subscription.stripe_subscription_id);
-    
-    res.json({
-      success: true,
-      message: 'Subscription will be canceled at the end of the current billing period',
-      data: {
-        cancelAtPeriodEnd: true,
-        currentPeriodEnd: subscription.current_period_end
-      }
+
+    const subscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true
+    });
+
+    res.json({ 
+      success: true, 
+      data: { 
+        message: 'Subscription will be cancelled at the end of the current period',
+        subscription: subscription
+      } 
     });
   } catch (error) {
-    console.error('Error canceling subscription:', error);
-    res.status(500).json({
+    console.error('Error cancelling subscription:', error);
+    res.status(500).json({ 
       success: false,
-      error: 'Failed to cancel subscription'
+      error: 'Failed to cancel subscription',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-/**
- * @route   POST /api/subscriptions/reactivate
- * @desc    Reactivate a canceled subscription
- * @access  Private
- */
-router.post('/reactivate', authenticateJWT, async (req, res) => {
+// Webhook handler for Stripe events
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  
   try {
-    const userId = req.user.id;
-    
-    // Get user's subscription that's set to cancel at period end
-    const subscription = await db('subscriptions')
-      .where({ 
-        user_id: userId, 
-        status: 'active',
-        cancel_at_period_end: true 
-      })
-      .first();
-      
-    if (!subscription) {
-      return res.status(400).json({
-        success: false,
-        error: 'No cancellable subscription found'
-      });
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        await handleCheckoutSession(session);
+        break;
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        const subscription = event.data.object;
+        await handleSubscriptionUpdate(subscription);
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
     }
-    
-    // Reactivate the subscription
-    await stripeService.reactivateSubscription(subscription.stripe_subscription_id);
-    
-    res.json({
-      success: true,
-      message: 'Subscription has been reactivated',
-      data: {
-        cancelAtPeriodEnd: false
-      }
-    });
-  } catch (error) {
-    console.error('Error reactivating subscription:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to reactivate subscription'
-    });
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
+
+// Helper functions for webhook handlers
+async function handleCheckoutSession(session) {
+  const { customer, subscription, metadata } = session;
+  const userId = metadata?.userId;
+  
+  if (!userId) return;
+
+  // Update user's subscription status in your database
+  await db('users')
+    .where({ id: userId })
+    .update({
+      stripe_customer_id: customer,
+      subscription_status: subscription ? 'active' : 'inactive',
+      subscription_id: subscription || null,
+      updated_at: new Date()
+    });
+}
+
+async function handleSubscriptionUpdate(subscription) {
+  const { customer, status } = subscription;
+  
+  // Update user's subscription status in your database
+  await db('users')
+    .where({ stripe_customer_id: customer })
+    .update({
+      subscription_status: status,
+      updated_at: new Date()
+    });
+}
 
 module.exports = router;

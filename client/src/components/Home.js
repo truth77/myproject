@@ -51,33 +51,7 @@ const Home = () => {
             flexWrap: 'wrap' 
           }}>
             <Link
-              to="/login"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#2c3e50',
-                color: 'white',
-                padding: '10px 24px',
-                borderRadius: '4px',
-                textDecoration: 'none',
-                fontWeight: 600,
-                transition: 'all 0.2s ease',
-                border: '2px solid #2c3e50'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#4ba1a4';
-                e.currentTarget.style.borderColor = '#4ba1a4';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#2c3e50';
-                e.currentTarget.style.borderColor = '#2c3e50';
-              }}
-            >
-              Get Started
-            </Link>
-            <Link
-              to="/login"
+              to="/newsletter"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -102,7 +76,7 @@ const Home = () => {
                 e.currentTarget.style.color = '#2c3e50';
               }}
             >
-              Sign In
+              Get Our Newsletter
             </Link>
           </div>
         )}

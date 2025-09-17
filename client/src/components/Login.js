@@ -1,197 +1,162 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAppContext } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Alert, Button, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAppContext();
+  const [error, setError] = useState('');
+  const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Get the intended destination or default to home
   const from = location.state?.from?.pathname || '/';
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      // The AuthCallback component will handle the actual redirection
+      navigate('/auth/callback', { 
+        state: { from: location.state?.from || { pathname: '/' } },
+        replace: true 
+      });
+    }
+  }, [isAuthenticated, navigate, location.state?.from]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCredentials(prev => ({
       ...prev,
-      [name]: value
+      [name]: value.trim()
     }));
+    
+    // Clear error when user types
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    
+    // Basic validation
+    if (!credentials.email || !credentials.password) {
+      setError('Email and password are required');
+      return;
+    }
+    
     setIsLoading(true);
-
+    setError('');
+    
     try {
-      const result = await login(credentials);
-      if (result.success) {
-        // Check if user has an active subscription
-        // This will be handled by the ProtectedRoute component
-        navigate(from, { replace: true });
-      } else {
-        setError(result.message || 'Login failed. Please check your credentials.');
+      const result = await login(credentials.email, credentials.password);
+      
+      if (!result.success) {
+        setError(result.error || 'Login failed. Please try again.');
       }
+      // The useEffect will handle the redirect when isAuthenticated changes
     } catch (err) {
-      setError('An error occurred during login. Please try again.');
       console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#2c3e50',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s'
-  };
+  if (loading) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      </Container>
+    );
+  }
 
   return (
-    <div style={{
-      maxWidth: '400px',
-      margin: '2rem auto',
-      padding: '2rem',
-      borderRadius: '8px',
-      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-    }}>
-      <h2 style={{
-        textAlign: 'center',
-        color: '#2c3e50',
-        marginBottom: '1.5rem'
-      }}>Sign In</h2>
-      
-      {error && (
-        <div style={{
-          backgroundColor: '#ffebee',
-          color: '#c62828',
-          padding: '0.75rem',
-          borderRadius: '4px',
-          marginBottom: '1rem',
-          fontSize: '0.9rem'
-        }}>
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email" style={{
-            display: 'block',
-            marginBottom: '0.5rem',
-            fontWeight: '500',
-            color: '#2c3e50'
-          }}>
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={credentials.email}
-            onChange={handleChange}
-            required
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              boxSizing: 'border-box'
-            }}
-            disabled={isLoading}
-          />
-        </div>
-        
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '0.5rem'
-          }}>
-            <label htmlFor="password" style={{
-              fontWeight: '500',
-              color: '#2c3e50'
-            }}>
-              Password
-            </label>
-            <Link to="/forgot-password" style={{
-              fontSize: '0.875rem',
-              color: '#3498db',
-              textDecoration: 'none',
-              '&:hover': {
-                textDecoration: 'underline'
-              }
-            }}>
-              Forgot password?
-            </Link>
-          </div>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={credentials.password}
-            onChange={handleChange}
-            required
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              boxSizing: 'border-box'
-            }}
-            disabled={isLoading}
-          />
-        </div>
-        
-        <button
-          type="submit"
-          disabled={isLoading}
-          style={{
-            ...buttonStyle,
-            opacity: isLoading ? 0.7 : 1,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            backgroundColor: isLoading ? '#2c3e50' : '#2c3e50'
-          }}
-          onMouseOver={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#4ba1a4')}
-          onMouseOut={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#2c3e50')}
-        >
-          {isLoading ? 'Signing In...' : 'Sign In'}
-        </button>
-      </form>
-      
-      <div style={{
-        textAlign: 'center',
-        marginTop: '1.5rem',
-        fontSize: '0.9rem',
-        color: '#7f8c8d'
-      }}>
-        Don't have an account?{' '}
-        <Link 
-          to="/register" 
-          state={{ from: location.state?.from }}
-          style={{
-            color: '#3498db',
-            textDecoration: 'none',
-            fontWeight: '500',
-            '&:hover': {
-              textDecoration: 'underline'
-            }
-          }}
-        >
-          Sign up
-        </Link>
-      </div>
-    </div>
+    <Container className="py-5">
+      <Row className="justify-content-center">
+        <Col md={6} lg={5}>
+          <Card className="shadow-sm">
+            <Card.Body className="p-4">
+              <h2 className="text-center mb-4">Sign In</h2>
+              
+              {error && (
+                <Alert variant="danger" onClose={() => setError('')} dismissible>
+                  {error}
+                </Alert>
+              )}
+              
+              <Form onSubmit={handleSubmit}>
+                <Form.Group className="mb-3" controlId="formBasicEmail">
+                  <Form.Label>Email address</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    placeholder="Enter email"
+                    value={credentials.email}
+                    onChange={handleChange}
+                    required
+                    disabled={isLoading}
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3" controlId="formBasicPassword">
+                  <Form.Label>Password</Form.Label>
+                  <Form.Control
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={credentials.password}
+                    onChange={handleChange}
+                    required
+                    disabled={isLoading}
+                  />
+                </Form.Group>
+
+                <div className="d-grid gap-2">
+                  <Button 
+                    variant="primary" 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="mt-3"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Spinner
+                          as="span"
+                          animation="border"
+                          size="sm"
+                          role="status"
+                          aria-hidden="true"
+                          className="me-2"
+                        />
+                        Signing in...
+                      </>
+                    ) : (
+                      'Sign In'
+                    )}
+                  </Button>
+                </div>
+              </Form>
+              
+              <div className="text-center mt-3">
+                <Link to="/forgot-password" className="text-decoration-none">
+                  Forgot password?
+                </Link>
+              </div>
+              
+              <div className="text-center mt-3">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-decoration-none">
+                  Sign up
+                </Link>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

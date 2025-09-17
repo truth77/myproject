@@ -6,8 +6,8 @@ services:
     container_name: bible-frontend
     environment:
       - NODE_ENV=development
-      - REACT_APP_API_URL=http://localhost:3001
-      - NODE_OPTIONS=--max-old-space-size=1024
+      - REACT_APP_API_URL=http://bible-backend:3000
+      - NODE_OPTIONS=--max-old-space-size=2048
       - CHOKIDAR_USEPOLLING=true
       - WDS_SOCKET_PORT=3002
       - WDS_SOCKET_HOST=localhost
@@ -15,7 +15,7 @@ services:
       - WATCHPACK_POLLING=true
       - FAST_REFRESH=true
     ports:
-      - "3002:3000"  # Map host port 3002 to container port 3000
+      - "3002:3000"
     volumes:
       - ./client:/usr/app
       - /usr/app/node_modules
@@ -37,10 +37,10 @@ services:
       resources:
         limits:
           cpus: '2.0'
-          memory: 2G
+          memory: 4G
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1.0'
+          memory: 2G
 
   backend:
     build:
@@ -96,13 +96,13 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: bible-postgres
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bible
-      POSTGRES_HOST_AUTH_METHOD: trust
-      # Optimize PostgreSQL for better performance
-      POSTGRES_INITDB_ARGS: --data-checksums
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-md5}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -112,10 +112,10 @@ services:
     networks:
       - bible-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bible"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-bible}"]
       interval: 15s
       timeout: 5s
-      retries: 3
+      retries: 5
       start_period: 20s
     deploy:
       resources:

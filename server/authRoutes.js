@@ -4,11 +4,24 @@ const router = express.Router();
 
 // Import Facebook auth module
 const { isFacebookConfigured } = require('./auth/facebook');
-const { createUser, logUserIn, loginFacebook } = require('./controllers/auth');
+const { createUser, logUserIn, loginFacebook, handleStripeWebhook } = require('./controllers/auth');
+
+// Middleware to parse raw body for Stripe webhook
+const rawBodySaver = (req, res, buf, encoding) => {
+  if (buf && buf.length) {
+    req.rawBody = buf.toString(encoding || 'utf8');
+  }
+};
 
 // Regular authentication routes
 router.post('/register', createUser);
 router.post('/login', logUserIn);
+
+// Stripe webhook - must be before express.json() to get raw body
+router.post('/webhook', 
+  express.raw({ type: 'application/json', verify: rawBodySaver }),
+  handleStripeWebhook
+);
 
 // Facebook authentication route - only enabled if properly configured
 if (isFacebookConfigured) {

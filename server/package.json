@@ -7,7 +7,10 @@
     "docker-dev": "nodemon server.js",
     "migrate": "knex migrate:latest",
     "seed": "knex seed:run",
-    "seed:plans": "node -e \"require('./seeders/subscriptionPlans').seed().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); })\""
+    "seed:plans": "node -e \"require('./seeders/subscriptionPlans').seed().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); })\"",
+    "create-admin": "node scripts/create-admin.js",
+    "check-admin": "node scripts/check-admin.js",
+    "reset-admin-password": "node scripts/reset-admin-password.js"
   },
   "dependencies": {
     "axios": "^1.12.1",
@@ -17,6 +20,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
     "express-session": "^1.18.2",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",

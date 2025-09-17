@@ -13,47 +13,9 @@ const app = express();
 // Database connection
 require('./db');
 
-// CORS Configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'http://localhost:3003',
-      'http://127.0.0.1:3002'
-    ];
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      console.warn(msg);
-      return callback(new Error(msg), false);
-    }
-    
-    return callback(null, true);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-  credentials: true,
-  optionsSuccessStatus: 200,
-  preflightContinue: true
-};
-
-// Apply CORS with the specified options
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
-
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
-  next();
-});
+// Simple CORS configuration
+app.use(cors());
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -82,6 +44,8 @@ const postRoutes = require('./routes/posts');
 const userRoutes = require('./routes/users');
 const subscriptionRoutes = require('./routes/subscriptions');
 const paymentRoutes = require('./routes/payments');
+const adminRoutes = require('./routes/admin');
+const donationRoutes = require('./routes/donations');
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -91,6 +55,8 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/donations', donationRoutes);
 
 // Import database connection
 const db = require('./db');
@@ -248,7 +214,7 @@ app.get('/', async (req, res) => {
     <h1>Bible App API Reference</h1>
     <p>Welcome to the Bible App API documentation. Below you'll find all available endpoints and how to use them.</p>
     
-    <h2>🔑 Authentication</h2>
+    <h2>🔑 Best Authentication</h2>
     
     <div class="endpoint">
       <span class="method post">POST</span>
@@ -493,10 +459,23 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  res.status(500).json({
+    success: false,
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Not Found',
+    message: 'The requested resource was not found'
+  });
 });
 
 const PORT = process.env.PORT || 3000;

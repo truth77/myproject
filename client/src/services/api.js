@@ -1,6 +1,13 @@
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-console.log('API Base URL:', API_BASE_URL);
+const API_BASE_URL = 'http://localhost:3001'; // Changed to port 3001 to match backend's port
+
+// Make sure the URL doesn't end with a slash
+const cleanBaseUrl = API_BASE_URL.endsWith('/') 
+  ? API_BASE_URL.slice(0, -1) 
+  : API_BASE_URL;
+
+console.log('Environment API URL:', process.env.REACT_APP_API_URL);
+console.log('Final API Base URL:', cleanBaseUrl);
 
 // Helper function to handle responses
 const handleResponse = async (response) => {
@@ -45,7 +52,7 @@ export const postsApi = {
   // Get all posts
   getAll: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/posts`, {
+      const response = await fetch(`${cleanBaseUrl}/posts`, {
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeader()
@@ -60,7 +67,7 @@ export const postsApi = {
   // Get single post by ID
   getById: async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+      const response = await fetch(`${cleanBaseUrl}/posts/${id}`, {
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeader()
@@ -80,7 +87,7 @@ export const postsApi = {
         formData.append(key, value);
       });
       
-      const response = await fetch(`${API_BASE_URL}/posts`, {
+      const response = await fetch(`${cleanBaseUrl}/posts`, {
         method: 'POST',
         body: formData,
         headers: getAuthHeader()
@@ -94,7 +101,7 @@ export const postsApi = {
   // Update post
   update: async (id, postData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+      const response = await fetch(`${cleanBaseUrl}/posts/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +118,7 @@ export const postsApi = {
   // Delete post
   delete: async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+      const response = await fetch(`${cleanBaseUrl}/posts/${id}`, {
         method: 'DELETE',
         headers: getAuthHeader()
       });
@@ -127,7 +134,7 @@ export const authApi = {
   // Login
   login: async (credentials) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/login`, {
+      const response = await fetch(`${cleanBaseUrl}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +160,7 @@ export const authApi = {
   register: async (userData) => {
     try {
       // Remove the /api from the URL since it's already included in the base URL
-      const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const baseUrl = cleanBaseUrl.endsWith('/api') ? cleanBaseUrl.slice(0, -4) : cleanBaseUrl;
       const registerUrl = `${baseUrl}/api/register`;
       
       console.log('Sending registration request to:', registerUrl);
@@ -227,7 +234,7 @@ export const authApi = {
     }
 
     try {
-      const baseUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const baseUrl = cleanBaseUrl.endsWith('/api') ? cleanBaseUrl.slice(0, -4) : cleanBaseUrl;
       const response = await fetch(`${baseUrl}/api/auth/me`, {
         method: 'GET',
         headers: {
@@ -264,7 +271,7 @@ export const authApi = {
   // Logout
   logout: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/login/logout`, {
+      const response = await fetch(`${cleanBaseUrl}/login/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -280,7 +287,7 @@ export const donationsApi = {
   // Create a donation session
   createCheckoutSession: async (donationData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/donations/create-checkout-session`, {
+      const response = await fetch(`${cleanBaseUrl}/donations/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,7 +304,7 @@ export const donationsApi = {
   // Get donation history
   getDonationHistory: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/donations/history`, {
+      const response = await fetch(`${cleanBaseUrl}/donations/history`, {
         headers: getAuthHeader()
       });
       return handleResponse(response);
@@ -312,7 +319,7 @@ export const subscriptionsApi = {
   // Get available subscription plans
   getPlans: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/subscriptions/plans`, {
+      const response = await fetch(`${cleanBaseUrl}/subscriptions/plans`, {
         headers: getAuthHeader()
       });
       return handleResponse(response);
@@ -325,7 +332,7 @@ export const subscriptionsApi = {
   createCheckoutSession: async (priceId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/subscriptions/create-checkout-session`, {
+      const response = await fetch(`${cleanBaseUrl}/subscriptions/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -343,7 +350,7 @@ export const subscriptionsApi = {
   createCustomerPortalSession: async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/subscriptions/customer-portal`, {
+      const response = await fetch(`${cleanBaseUrl}/subscriptions/customer-portal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -360,7 +367,7 @@ export const subscriptionsApi = {
   getSubscriptionStatus: async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/subscriptions/status`, {
+      const response = await fetch(`${cleanBaseUrl}/subscriptions/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -375,7 +382,7 @@ export const subscriptionsApi = {
   cancelSubscription: async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/subscriptions/cancel`, {
+      const response = await fetch(`${cleanBaseUrl}/subscriptions/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -397,7 +404,7 @@ export const subscriptionsApi = {
         search
       }).toString();
       
-      const response = await fetch(`${API_BASE_URL}/admin/subscribers?${query}`, {
+      const response = await fetch(`${cleanBaseUrl}/admin/subscribers?${query}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -412,7 +419,7 @@ export const subscriptionsApi = {
   getSubscriber: async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/admin/subscribers/${userId}`, {
+      const response = await fetch(`${cleanBaseUrl}/admin/subscribers/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -427,7 +434,7 @@ export const subscriptionsApi = {
   updateSubscription: async (userId, subscriptionData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/admin/subscribers/${userId}/subscription`, {
+      const response = await fetch(`${cleanBaseUrl}/admin/subscribers/${userId}/subscription`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -445,7 +452,7 @@ export const subscriptionsApi = {
   adminCancelSubscription: async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/admin/subscribers/${userId}/subscription/cancel`, {
+      const response = await fetch(`${cleanBaseUrl}/admin/subscribers/${userId}/subscription/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -461,7 +468,7 @@ export const subscriptionsApi = {
   getAdminStats: async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/admin/stats`, {
+      const response = await fetch(`${cleanBaseUrl}/admin/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -476,7 +483,7 @@ export const subscriptionsApi = {
   exportSubscribers: async (format = 'csv') => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/admin/subscribers/export?format=${format}`, {
+      const response = await fetch(`${cleanBaseUrl}/admin/subscribers/export?format=${format}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -510,7 +517,7 @@ export const premiumApi = {
   // Get premium content (requires active subscription)
   getPremiumContent: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/premium/content`, {
+      const response = await fetch(`${cleanBaseUrl}/premium/content`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

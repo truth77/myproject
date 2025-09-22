@@ -13,22 +13,65 @@ const app = express();
 // Database connection
 require('./db');
 
-// Simple CORS configuration
-app.use(cors());
-app.options('*', cors());
+// CORS configuration
+const corsOptions = {
+  origin: (origin, callback) => {
+    // In development, allow all origins for easier debugging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Allowing CORS for development from origin:', origin);
+      return callback(null, true);
+    }
+
+    // Production allowed origins
+    const allowedOrigins = [
+      'http://localhost:3002',    // Frontend on host machine
+      'http://127.0.0.1:3002',    // Alternative localhost
+      'http://frontend:3000',     // Docker service name
+      'http://bible-frontend:3000' // Docker container name
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log('Allowing CORS for origin:', origin);
+      callback(null, true);
+    } else {
+      console.warn('CORS blocked request from origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Credentials'
+  ],
+  exposedHeaders: ['Set-Cookie', 'set-cookie'],
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS with options
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session configuration
+app.set('trust proxy', 1); // Trust first proxy
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-session-secret',
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : 'localhost'
   }
 }));
 

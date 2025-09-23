@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider  } from './contexts/ToastContext';
 import { NewSubscriptionProvider } from './contexts/NewSubscriptionContext';
 import store from './store';
 import AppLayout from './AppLayout';
@@ -61,9 +62,11 @@ function AppWithProviders() {
     <Provider store={store}>
       <AppProvider>
         <AuthProvider>
-          <NewSubscriptionProvider>
-            <AppRoutes />
-          </NewSubscriptionProvider>
+          <ToastProvider>
+            <NewSubscriptionProvider>
+              <AppRoutes />
+            </NewSubscriptionProvider>
+          </ToastProvider>
         </AuthProvider>
       </AppProvider>
     </Provider>

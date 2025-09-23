@@ -24,7 +24,7 @@ const authenticateJWT = async (req, res, next) => {
     
     // Get user from database
     const user = await db('users')
-      .where({ id: decoded.id })
+      .where({ id: decoded.user.id })  
       .select('id', 'username', 'email', 'role')
       .first();
     

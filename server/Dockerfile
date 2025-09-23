@@ -1,6 +1,9 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+# Install PostgreSQL client tools
+RUN apk add --no-cache postgresql-client
+
 WORKDIR /usr/src/app
 
 # Install build dependencies
@@ -17,6 +20,9 @@ RUN apk del .build-deps
 
 # Runtime stage
 FROM node:20-alpine
+
+# Install PostgreSQL client tools in the final image
+RUN apk add --no-cache postgresql-client
 
 WORKDIR /usr/src/app
 

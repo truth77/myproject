@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Alert, Button, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -13,6 +14,24 @@ const Login = () => {
   
   // Get the intended destination or default to home
   const from = location.state?.from?.pathname || '/';
+  
+  // Show welcome toast if redirected from registration
+  useEffect(() => {
+    if (location.state?.showWelcomeToast) {
+      toast.success(location.state.welcomeMessage, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      
+      // Clear the state to prevent showing the toast again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
   
   // Redirect if already logged in
   useEffect(() => {

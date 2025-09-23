@@ -1,3 +1,6 @@
+// Load environment variables first
+require('dotenv').config();
+
 // Start memory monitoring in development
 if (process.env.NODE_ENV === 'development') {
   require('./memory-monitor');

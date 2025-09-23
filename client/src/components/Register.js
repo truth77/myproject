@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authApi } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 // Define input style outside the component
 const inputStyle = {
@@ -30,6 +31,7 @@ const Register = () => {
   });
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   const from = location.state?.from?.pathname || '/';
 
   const validatePassword = (password) => {
@@ -98,13 +100,10 @@ const Register = () => {
       
       console.log('Registration response:', response);
       
-      // If we get here, registration was successful
-      navigate('/login', { 
-        state: { 
-          from: from,
-          registrationSuccess: 'Registration successful! Please log in.'
-        } 
-      });
+      // Show success toast and redirect
+      showToast('🎉 Thanks for joining our site! Feel free to login to access all our cool stuff!');
+      navigate('/login');
+      
     } catch (err) {
       console.error('Registration error:', {
         message: err.message,

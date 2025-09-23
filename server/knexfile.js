@@ -3,8 +3,8 @@ require('dotenv').config();
 module.exports = {
   development: {
     client: 'pg',
-    connection: {
-      host: process.env.DB_HOST || 'localhost',
+    connection: process.env.DATABASE_URL || {
+      host: process.env.DB_HOST || 'postgres',
       port: parseInt(process.env.DB_PORT || '5432'),
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
@@ -20,9 +20,9 @@ module.exports = {
     pool: {
       min: 2,
       max: 10,
-      idleTimeoutMillis: 10000, // Close idle connections after 10 seconds
-      createTimeoutMillis: 30000, // Max time to try creating a connection
-      acquireTimeoutMillis: 30000 // Max time to try acquiring a connection
+      idleTimeoutMillis: 10000,
+      createTimeoutMillis: 30000,
+      acquireTimeoutMillis: 30000
     },
     debug: process.env.NODE_ENV === 'development',
     asyncStackTraces: process.env.NODE_ENV === 'development'

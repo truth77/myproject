@@ -303,24 +303,25 @@ app.get('/', async (req, res) => {
     
     <div class="endpoint">
       <span class="method post">POST</span>
-      <span class="path">/api/subscriptions/subscribe</span>
-      <div class="description">Create a new subscription or process a one-time payment</div>
+      <span class="path">/api/subscriptions/checkout-session</span>
+      <div class="description">Create a new checkout session for subscription or one-time payment</div>
       <div class="body-params">Body: { priceId: 'string', isSubscription: boolean }</div>
       <span class="access">Requires JWT</span>
     </div>
     
     <div class="endpoint">
       <span class="method get">GET</span>
-      <span class="path">/api/subscriptions/status</span>
-      <div class="description">Get the current user's subscription status and details</div>
+      <span class="path">/api/subscriptions/user</span>
+      <div class="description">Get current user's subscription details and status</div>
       <span class="access">Requires JWT</span>
     </div>
     
     <div class="endpoint">
       <span class="method post">POST</span>
-      <span class="path">/api/subscriptions/portal</span>
-      <div class="description">Create a Stripe Customer Portal session for subscription management</div>
-      <span class="access">Requires Active Subscription</span>
+      <span class="path">/api/subscriptions/cancel</span>
+      <div class="description">Cancel an active subscription</div>
+      <div class="body-params">Body: { subscriptionId: 'string' }</div>
+      <span class="access">Requires JWT</span>
     </div>
     
     <div class="endpoint">

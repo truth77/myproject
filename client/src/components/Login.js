@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Alert, Button, Form, Container, Row, Col, Card, Spinner } from 'react-bootstrap';
-import { toast } from 'react-toastify';
+import { useToast } from '../contexts/ToastContext';
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, isAuthenticated, loading } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -18,31 +19,28 @@ const Login = () => {
   // Show welcome toast if redirected from registration
   useEffect(() => {
     if (location.state?.showWelcomeToast) {
-      toast.success(location.state.welcomeMessage, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-      
+      showToast(location.state.welcomeMessage, 'success');
       // Clear the state to prevent showing the toast again on refresh
       window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
+  }, [location.state, showToast]);
   
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      // The AuthCallback component will handle the actual redirection
-      navigate('/auth/callback', { 
-        state: { from: location.state?.from || { pathname: '/' } },
-        replace: true 
+      // Redirect to the originally requested URL, profile page, or home page
+      const redirectTo = location.state?.from?.pathname || '/profile' || '/';
+      navigate(redirectTo, { 
+        replace: true,
+        state: { 
+          // Preserve any existing state
+          ...(location.state || {}),
+          // But override the from to prevent loops
+          from: undefined 
+        } 
       });
     }
-  }, [isAuthenticated, navigate, location.state?.from]);
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -70,7 +68,9 @@ const Login = () => {
     try {
       const result = await login(credentials.email, credentials.password);
       
-      if (!result.success) {
+      if (result.success) {
+        showToast('Successfully logged in!', 'success');
+      } else {
         setError(result.error || 'Login failed. Please try again.');
       }
       // The useEffect will handle the redirect when isAuthenticated changes

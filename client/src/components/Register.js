@@ -100,9 +100,16 @@ const Register = () => {
       
       console.log('Registration response:', response);
       
-      // Show success toast and redirect
-      showToast('🎉 Thanks for joining our site! Feel free to login to access all our cool stuff!');
-      navigate('/login');
+      // Show success toast
+      showToast('Registration successful! Please log in to continue.', 'success');
+      
+      // Redirect to login with a welcome message
+      navigate('/login', { 
+        state: { 
+          showWelcomeToast: true,
+          welcomeMessage: `Welcome, ${formData.username}! Please log in to continue.`
+        } 
+      });
       
     } catch (err) {
       console.error('Registration error:', {

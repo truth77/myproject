@@ -4,11 +4,11 @@ module.exports = {
   development: {
     client: 'pg',
     connection: process.env.DATABASE_URL || {
-      host: process.env.DB_HOST || 'postgres',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'bible'
+      host: 'localhost',
+      port: 5432,
+      user: 'postgres',
+      password: process.env.DB_PASSWORD || 'C00kies!!!',
+      database: 'bible'
     },
     migrations: {
       directory: './migrations',
@@ -51,6 +51,7 @@ module.exports = {
       createTimeoutMillis: 30000,
       acquireTimeoutMillis: 30000
     },
-    debug: process.env.KNEX_DEBUG === 'true' // Separate debug flag for production
+    debug: process.env.KNEX_DEBUG === 'true', 
+    asyncStackTraces: process.env.KNEX_DEBUG === 'true'
   }
 };

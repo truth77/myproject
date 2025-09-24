@@ -8,6 +8,9 @@ exports.up = function(knex) {
     
     // Add subscription_status column, nullable
     table.string('subscription_status', 50).nullable();
+
+    // Add role column with ENUM type
+    table.enum('role', ['user', 'admin', 'superadmin']).defaultTo('user').notNullable();
   });
 };
 
@@ -16,5 +19,6 @@ exports.down = function(knex) {
     table.dropColumn('is_active');
     table.dropColumn('last_login_at');
     table.dropColumn('subscription_status');
+    table.dropColumn('role');
   });
 };
